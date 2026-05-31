@@ -1,0 +1,29 @@
+{
+  "done": false,
+  "milestones": [
+    {
+      "id": "M1",
+      "title": "Foundation: Vite+React+TS+Tailwind, profile + 2 link cards, galaxy bg, favicon/OG/dark-bg/noscript, deploy",
+      "status": "in_progress",
+      "note": "Done: scaffold (Vite6/React19/TS/Tailwind4/Vitest3), TDD LinkCard+ProfileHeader+App (7 tests), links data w/ simple-icons, index.html (dark bg, OG tags, fonts, noscript), SVG favicon, README, build+tests green. Next: GalaxyBackground canvas; apple-touch-icon.png + og.png assets (need image gen/human); Vercel deploy (human)."
+    },
+    {
+      "id": "M2",
+      "title": "Water ripples: ripple canvas above bg/below fg, background-only tap detection, theme-tinted concentric rings",
+      "status": "todo",
+      "note": ""
+    },
+    {
+      "id": "M3",
+      "title": "Themes: Matrix + Rainbow backgrounds, theme orb (bottom-right, idle bob), crossfade + orb pulse, accent var + rainbow scrim, localStorage persistence",
+      "status": "todo",
+      "note": ""
+    },
+    {
+      "id": "M4",
+      "title": "Polish: reduced-motion + manual toggle, desktop cursor sprites + picker, hover tilt, tap press/glow, DPR canvas hook, visibilitychange pause, keyboard a11y, safe-area insets, Playwright smoke test",
+      "status": "todo",
+      "note": ""
+    }
+  ]
+}
