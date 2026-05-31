@@ -23,7 +23,7 @@
       "id": "M4",
       "title": "Polish: reduced-motion + manual toggle, desktop cursor sprites + picker, hover tilt, tap press/glow, DPR canvas hook, visibilitychange pause, keyboard a11y, safe-area insets, Playwright smoke test",
       "status": "todo",
-      "note": ""
+      "note": "STARTED. Done + verified (full suite 94 tests, motion.test.ts 11/11): src/context/motion.ts pure reduced-motion model (MotionSetting system|reduce|full, resolveReducedMotion, nextMotionSetting flips resolved state, load/saveMotion via injected Storage, key danny-vg:motion) + motion.test.ts — mirrors theme.ts pattern, foundation only (nothing imports it yet so build is safe). NEXT: MotionContext.tsx provider + useReducedMotion()/useMotion() hooks mirroring ThemeContext (NOTE: jsdom setup.ts has NO matchMedia — guard window.matchMedia + mock it in the context test), mirror data-motion='reduce'|'full' onto documentElement; add [data-motion='reduce'] CSS block in index.css paralleling the existing @media (prefers-reduced-motion) rules (rainbow-bg/profile-ring/theme-orb animation:none); MotionToggle.tsx bottom-left translucent button (mirror ThemeOrb); wire MotionProvider into main.tsx around App. THEN remaining M4: cursor sprites+picker, card hover tilt, tap press/glow, useResizableCanvas DPR hook, visibilitychange rAF pause, full kbd tab order, safe-area insets, Playwright smoke. HUMAN-ONLY: Vercel deploy, apple-touch-icon.png + /public/og.png."
     }
   ]
 }
