@@ -33,6 +33,11 @@ body {
     var(--bg-base);
 }
 
+/* Matrix rain base: near-black so the green glyph canvas reads as "the Matrix". */
+.matrix-bg {
+  background: #010402;
+}
+
 /* Profile picture: rotating gradient accent ring around a dark inner disc. */
 .profile-ring {
   width: 112px;

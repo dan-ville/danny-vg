@@ -17,7 +17,7 @@
       "id": "M3",
       "title": "Themes: Matrix + Rainbow backgrounds, theme orb (bottom-right, idle bob), crossfade + orb pulse, accent var + rainbow scrim, localStorage persistence",
       "status": "todo",
-      "note": "Foundation done + verified (full suite 72 tests, build green): pure theme.ts model (THEMES cycle order, nextTheme, THEME_ACCENTS per-theme accent pairs, isTheme guard, loadTheme/saveTheme w/ injected Storage + error-safe localStorage) + ThemeContext.tsx (ThemeProvider hydrates from localStorage, persists on change, mirrors data-theme + --accent/--accent-2 onto document root; useTheme hook). Wired ThemeProvider into main.tsx. NEXT: MatrixBackground.tsx (pure matrix.ts column model), then RainbowBackground.tsx (CSS conic), ThemeOrb (bottom-right idle bob, cycle on click, theme-reflecting skin, pulse, a11y), crossfade between bgs, rainbow-only dark scrim + stronger card frost."
+      "note": "Done so far + verified (full suite 72 tests, build green): theme.ts model + ThemeContext (provider hydrates/persists localStorage, mirrors data-theme + --accent vars). NEW this run: pure matrix.ts model (GLYPHS katakana+digits, randomGlyph, columnCount, createColumns staggered above screen, advanceColumn fall+recycle, glyphIntensity head=1 fading trail) + MatrixBackground.tsx (DPR canvas, per-cell glyph grid, white-ish head + green fading trail, shimmer, .matrix-bg black base). Not yet wired into App. NEXT: RainbowBackground.tsx (CSS conic, reduced-motion), then ThemeOrb (bottom-right idle bob, cycle on click, theme-reflecting skin, pulse, a11y), crossfade between the 3 bgs driven by useTheme, rainbow-only dark scrim + stronger card frost."
     },
     {
       "id": "M4",
