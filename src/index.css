@@ -24,6 +24,15 @@ body {
     sans-serif;
 }
 
+/* Galaxy nebula: deep purple/blue/black radial wash beneath the star canvas. */
+.galaxy-bg {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99, 60, 180, 0.35), transparent 70%),
+    radial-gradient(ellipse 70% 50% at 80% 90%, rgba(40, 70, 160, 0.3), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 15% 80%, rgba(120, 40, 140, 0.22), transparent 70%),
+    var(--bg-base);
+}
+
 /* Profile picture: rotating gradient accent ring around a dark inner disc. */
 .profile-ring {
   width: 112px;
