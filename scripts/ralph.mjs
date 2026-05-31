@@ -146,6 +146,8 @@ for (let i = 1; i <= MAX_ITERS; i++) {
   }
   console.log(
     `\n→ Progress: ${before.summary} → ${after.summary}` +
-      (committed ? `  (HEAD ${beforeHead.slice(0, 7) || "—"} → ${afterHead.slice(0, 7)})` : `  (state.json updated)`),
+      (committed
+        ? `  (HEAD ${beforeHead.slice(0, 7) || "—"} → ${afterHead.slice(0, 7)})`
+        : `  (state.json updated)`),
   )
 }
