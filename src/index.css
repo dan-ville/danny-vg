@@ -38,6 +38,41 @@ body {
   background: #010402;
 }
 
+/*
+ * Rainbow: slow CSS-only conic gradient over the dark base. We animate the
+ * gradient's start angle (via a registered <angle> custom property) rather than
+ * rotating the element, so a viewport-sized layer never exposes its corners.
+ * One 24s loop — motion just below conscious notice. The per-theme dark scrim +
+ * stronger card frost are applied separately via [data-theme='rainbow'].
+ */
+@property --rainbow-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.rainbow-bg {
+  background:
+    conic-gradient(
+      from var(--rainbow-angle) at 50% 50%,
+      #ff5f8f,
+      #ffd76f,
+      #6fffb0,
+      #6fd7ff,
+      #b388ff,
+      #ff8ff0,
+      #ff5f8f
+    ),
+    var(--bg-base);
+  animation: rainbow-spin 24s linear infinite;
+}
+
+@keyframes rainbow-spin {
+  to {
+    --rainbow-angle: 360deg;
+  }
+}
+
 /* Profile picture: rotating gradient accent ring around a dark inner disc. */
 .profile-ring {
   width: 112px;
@@ -68,6 +103,11 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .profile-ring {
+    animation: none;
+  }
+
+  /* Static iridescent wash — no continuous hue rotation. */
+  .rainbow-bg {
     animation: none;
   }
 }
