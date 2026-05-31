@@ -1,18 +1,36 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import App from './App';
 import { ThemeProvider } from './context/ThemeContext';
+import { MotionProvider } from './context/MotionContext';
 
-// App reads the theme (background stage + orb), so it needs the provider —
-// exactly as main.tsx mounts it in production.
+// App reads the theme (background stage + orb) and motion (toggle), so it needs
+// both providers — exactly as main.tsx mounts them in production.
 const renderApp = () =>
   render(
-    <ThemeProvider>
-      <App />
-    </ThemeProvider>,
+    <MotionProvider>
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
+    </MotionProvider>,
   );
 
 describe('App', () => {
+  // MotionProvider probes prefers-reduced-motion; jsdom ships no matchMedia.
+  beforeAll(() => {
+    if (typeof window.matchMedia !== 'function') {
+      window.matchMedia = (() => ({
+        matches: false,
+        media: '',
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        addListener: () => {},
+        removeListener: () => {},
+        dispatchEvent: () => true,
+        onchange: null,
+      })) as unknown as typeof window.matchMedia;
+    }
+  });
   it('shows the display name', () => {
     renderApp();
     expect(screen.getByRole('heading', { name: 'Danny VG' })).toBeInTheDocument();

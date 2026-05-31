@@ -158,6 +158,32 @@ body {
   }
 }
 
+/*
+ * Motion toggle: fixed bottom-left translucent disc, the calm sibling of the
+ * theme orb (which sits bottom-right). It deliberately does NOT bob — it is the
+ * "reduce motion" control, so it stays still. Accent focus ring + hover lift.
+ */
+.motion-toggle {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--fg);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition:
+    background-color 200ms ease,
+    transform 200ms ease;
+}
+
+.motion-toggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-2px);
+}
+
+.motion-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
 /* Profile picture: rotating gradient accent ring around a dark inner disc. */
 .profile-ring {
   width: 112px;
@@ -186,6 +212,14 @@ body {
   }
 }
 
+/*
+ * Reduced motion. Two gates, both ending at the same stilled state:
+ *   1. The OS media query — covers the no-JS / pre-hydration first paint.
+ *   2. [data-motion='reduce'] — the resolved app preference (MotionContext),
+ *      which also catches an explicit "reduce" on a system with no OS hint.
+ * In every case the idle/continuous animations stop; the user-initiated orb
+ * pulse is kept (it is cause-and-effect feedback, not ambient motion).
+ */
 @media (prefers-reduced-motion: reduce) {
   .profile-ring {
     animation: none;
@@ -204,4 +238,43 @@ body {
   .theme-orb--pulse {
     animation: orb-pulse 450ms ease-out;
   }
+}
+
+[data-motion='reduce'] .profile-ring {
+  animation: none;
+}
+
+[data-motion='reduce'] .rainbow-bg {
+  animation: none;
+}
+
+[data-motion='reduce'] .theme-orb {
+  animation: none;
+}
+
+[data-motion='reduce'] .theme-orb--pulse {
+  animation: orb-pulse 450ms ease-out;
+}
+
+/*
+ * Explicit "full" override: the user asked for motion even though their OS
+ * prefers reduced. Re-assert the animations the media query above switched off,
+ * so the manual toggle genuinely beats the system setting.
+ */
+[data-motion='full'] .profile-ring {
+  animation: profile-ring-spin 8s linear infinite;
+}
+
+[data-motion='full'] .rainbow-bg {
+  animation: rainbow-spin 24s linear infinite;
+}
+
+[data-motion='full'] .theme-orb {
+  animation: orb-bob 4s ease-in-out infinite;
+}
+
+[data-motion='full'] .theme-orb--pulse {
+  animation:
+    orb-bob 4s ease-in-out infinite,
+    orb-pulse 450ms ease-out;
 }

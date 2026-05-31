@@ -1,6 +1,7 @@
 import { ProfileHeader } from './components/ProfileHeader';
 import { LinkCard } from './components/LinkCard';
 import { ThemeOrb } from './components/ThemeOrb';
+import { MotionToggle } from './components/MotionToggle';
 import { BackgroundStage } from './backgrounds/BackgroundStage';
 import { RippleCanvas } from './effects/RippleCanvas';
 import { links } from './data/links';
@@ -19,6 +20,7 @@ export default function App() {
         </nav>
       </main>
       <ThemeOrb />
+      <MotionToggle />
     </>
   );
 }
