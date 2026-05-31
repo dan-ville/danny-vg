@@ -73,6 +73,91 @@ body {
   }
 }
 
+/*
+ * Rainbow readability layer: a dark radial scrim sitting inside the rainbow
+ * layer (above the gradient, below the z-10 foreground) so light text stays
+ * legible over the iridescent wash. Only rendered while rainbow is active.
+ */
+.rainbow-scrim {
+  background: radial-gradient(ellipse 75% 60% at 50% 42%, transparent 0%, rgba(5, 2, 16, 0.6) 100%);
+}
+
+/* Stronger frosted-glass cards on rainbow only — the other themes read fine. */
+[data-theme='rainbow'] .link-card {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(16px);
+}
+
+/*
+ * Background crossfade: the incoming theme layer fades in over the outgoing one
+ * (BackgroundStage drops the old layer once this completes). User-initiated, so
+ * it is intentionally kept under reduced-motion.
+ */
+@keyframes bg-crossfade-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.bg-crossfade-enter {
+  animation: bg-crossfade-enter 500ms ease-out;
+}
+
+/*
+ * Theme orb: fixed bottom-right switcher. Its skin is a conic gradient of the
+ * active accent pair (so it mirrors the theme) with a glossy highlight; it idle-
+ * bobs and pulses once per click. Accent focus ring for keyboard users.
+ */
+.theme-orb {
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.6), transparent 45%),
+    conic-gradient(from 0deg, var(--accent), var(--accent-2), var(--accent));
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 0 18px -2px var(--accent),
+    inset 0 0 10px rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  animation: orb-bob 4s ease-in-out infinite;
+}
+
+.theme-orb--pulse {
+  animation:
+    orb-bob 4s ease-in-out infinite,
+    orb-pulse 450ms ease-out;
+}
+
+.theme-orb:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@keyframes orb-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes orb-pulse {
+  0% {
+    box-shadow:
+      0 0 0 0 var(--accent),
+      inset 0 0 10px rgba(255, 255, 255, 0.18);
+  }
+  100% {
+    box-shadow:
+      0 0 0 14px transparent,
+      inset 0 0 10px rgba(255, 255, 255, 0.18);
+  }
+}
+
 /* Profile picture: rotating gradient accent ring around a dark inner disc. */
 .profile-ring {
   width: 112px;
@@ -109,5 +194,14 @@ body {
   /* Static iridescent wash — no continuous hue rotation. */
   .rainbow-bg {
     animation: none;
+  }
+
+  /* Still the idle bob; the click pulse (user-initiated) is kept. */
+  .theme-orb {
+    animation: none;
+  }
+
+  .theme-orb--pulse {
+    animation: orb-pulse 450ms ease-out;
   }
 }

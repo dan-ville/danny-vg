@@ -16,8 +16,8 @@
     {
       "id": "M3",
       "title": "Themes: Matrix + Rainbow backgrounds, theme orb (bottom-right, idle bob), crossfade + orb pulse, accent var + rainbow scrim, localStorage persistence",
-      "status": "todo",
-      "note": "Done so far + verified (full suite 75 tests, build green): theme.ts model + ThemeContext (hydrate/persist localStorage, mirrors data-theme + --accent), matrix.ts + MatrixBackground.tsx (DPR canvas glyph rain). NEW this run: RainbowBackground.tsx (CSS-only full-bleed div, no canvas/rAF) + .rainbow-bg CSS (conic gradient, 24s shift via registered @property --rainbow-angle so no corner-exposure, reduced-motion freezes it). None of the 3 bgs are wired into App yet (still hard-coded GalaxyBackground). NEXT: ThemeOrb (bottom-right idle bob, cycle on click, theme-reflecting skin, pulse, a11y), crossfade between the 3 bgs driven by useTheme (mount ThemeProvider in main.tsx + render bg by theme in App), rainbow-only dark scrim + stronger card frost via [data-theme='rainbow']."
+      "status": "done",
+      "note": "Code complete + verified (full suite 83 tests, build green). Foundation: theme.ts + ThemeContext (hydrate/persist localStorage, mirrors data-theme + --accent/--accent-2), matrix.ts + MatrixBackground + RainbowBackground (CSS-only conic gradient). FINAL slice this run: BackgroundStage.tsx (renders bg by useTheme, crossfade via stacked layers + bg-crossfade-enter keyframe, GC's stale layer after 500ms, aria-hidden) wired into App; ThemeOrb.tsx (fixed bottom-right, accent conic skin, idle orb-bob, orb-pulse on click via animationend, theme-aware aria-label, accent focus-visible ring) wired into App; rainbow-scrim (dark radial overlay inside rainbow layer) + [data-theme='rainbow'] .link-card stronger frost; reduced-motion stills bob (keeps user-initiated pulse). All 3 bgs now switch live via orb. NEXT: M4 polish (reduced-motion toggle, cursor sprites/picker, hover tilt, tap glow, DPR hook, visibilitychange pause, full kbd a11y/tab order, safe-area insets, Playwright smoke)."
     },
     {
       "id": "M4",

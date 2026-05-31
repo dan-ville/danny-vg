@@ -21,7 +21,7 @@ export function LinkCard({ label, href, icon }: LinkCardProps) {
     <a
       href={href}
       aria-label={label}
-      className="flex h-16 w-full items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 backdrop-blur-md transition active:scale-[0.98]"
+      className="link-card flex h-16 w-full items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 backdrop-blur-md transition active:scale-[0.98]"
     >
       <svg
         role="img"
