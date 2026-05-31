@@ -10,8 +10,8 @@
     {
       "id": "M2",
       "title": "Water ripples: ripple canvas above bg/below fg, background-only tap detection, theme-tinted concentric rings",
-      "status": "todo",
-      "note": ""
+      "status": "done",
+      "note": "Code complete + verified (42 tests, build green): pure ripples.ts model (createRipple 2-3 staggered rings, advance/radius/alpha/expiry, isBackgroundTap ignoring a/button/[data-no-ripple]) + RippleCanvas.tsx (z-0 between -z-10 bg and z-10 fg, pointer-events-none, window pointerdown listener, accent-tinted strokes via --accent, on-demand rAF loop that idles when no rings). Wired into App. Next: M3 themes (Matrix+Rainbow bgs, theme orb, crossfade, localStorage)."
     },
     {
       "id": "M3",
