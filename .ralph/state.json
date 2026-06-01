@@ -1,5 +1,10 @@
 {
   "done": false,
+  "humanTodos": [
+    "Generate /public/apple-touch-icon.png (180x180) — referenced by index.html.",
+    "Generate /public/og.png (1200x630 social preview) — referenced by index.html.",
+    "Deploy to Vercel (M1–M4); run the manual-acceptance pass on the live URL."
+  ],
   "milestones": [
     {
       "id": "M1",
@@ -23,7 +28,7 @@
       "id": "M4",
       "title": "Polish: reduced-motion + manual toggle, desktop cursor sprites + picker, hover tilt, tap press/glow, DPR canvas hook, visibilitychange pause, keyboard a11y, safe-area insets, Playwright smoke test",
       "status": "todo",
-      "note": "IN PROGRESS. DONE: reduced-motion toggle, cursor model+CursorContext, FantasyCursor, shared cursorSprites.tsx + CursorPicker. This run: card hover tilt (desktop) — pure tilt.tsx (computeTilt: mouse-pos->3D rotateX/rotateY toward pointer, clamped to maxDeg, flat on zero rect) + useTilt hook (rAF-coalesced pointer tracking, snap-back transition, hover-capable-gated no-ops on touch); wired into LinkCard (onPointerMove/Leave + perspective transform, useHoverCapable gate). 8 tilt tests + 2 LinkCard hover tests (jsdom has no PointerEvent -> MouseEvent typed 'pointermove'). Verified full suite 138 tests, tsc+build green. NEXT remaining M4: tap press/glow (mobile ~150ms accent flash), useResizableCanvas DPR hook (shared by 4 canvases), visibilitychange rAF pause for bg/ripple canvases, safe-area-inset padding on corner controls, Playwright smoke test. HUMAN-ONLY: Vercel deploy, apple-touch-icon.png + /public/og.png."
+      "note": "IN PROGRESS. DONE: reduced-motion toggle, cursor model+CursorContext, FantasyCursor, cursorSprites+CursorPicker, desktop hover tilt. THIS run: mobile tap press/glow — useTapGlow hook (effects/press.tsx): pointerdown opens ~150ms accent box-shadow glow window (eases out via box-shadow transition), re-tap restarts the timer, unmount clears it; gated to !hoverCapable so it never runs where the desktop tilt does. Wired into LinkCard (onPointerDown + merged glow.style; the CSS active:scale already supplies the press-down). 4 press hook tests + 2 LinkCard glow tests (fake timers). Verified full suite 167 tests, tsc+build green. NEXT remaining M4: useResizableCanvas DPR hook (shared by 3 canvases), visibilitychange rAF pause for bg/ripple canvases, safe-area-inset padding on corner controls, Playwright smoke test. HUMAN-ONLY: Vercel deploy, apple-touch-icon.png + /public/og.png."
     }
   ]
 }

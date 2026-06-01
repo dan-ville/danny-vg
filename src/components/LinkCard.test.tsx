@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { LinkCard } from './LinkCard';
 
@@ -91,6 +91,47 @@ describe('LinkCard', () => {
       const link = screen.getByRole('link', { name: /tiktok/i });
       pointerMoveAt(link, 50, 10);
       expect(link.style.transform).toBe('');
+    });
+  });
+
+  describe('tap glow (mobile)', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    });
+
+    function withHover(matches: boolean) {
+      vi.spyOn(window, 'matchMedia').mockImplementation((query: string) => ({
+        matches: query.includes('hover') ? matches : false,
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }) as unknown as MediaQueryList);
+    }
+
+    it('flashes an accent box-shadow on tap then clears it on touch devices', () => {
+      withHover(false);
+      render(<LinkCard label="TikTok" href="#" icon={fakeIcon} />);
+      const link = screen.getByRole('link', { name: /tiktok/i });
+
+      fireEvent.pointerDown(link);
+      expect(link.style.boxShadow).toContain('var(--accent)');
+
+      act(() => vi.advanceTimersByTime(150));
+      expect(link.style.boxShadow).toBe('');
+    });
+
+    it('does not glow on hover-capable (desktop) devices', () => {
+      withHover(true);
+      render(<LinkCard label="Instagram" href="#" icon={fakeIcon} />);
+      const link = screen.getByRole('link', { name: /instagram/i });
+      fireEvent.pointerDown(link);
+      expect(link.style.boxShadow).toBe('');
     });
   });
 });
