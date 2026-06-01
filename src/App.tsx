@@ -4,6 +4,7 @@ import { ThemeOrb } from './components/ThemeOrb';
 import { MotionToggle } from './components/MotionToggle';
 import { BackgroundStage } from './backgrounds/BackgroundStage';
 import { RippleCanvas } from './effects/RippleCanvas';
+import { FantasyCursor } from './effects/FantasyCursor';
 import { links } from './data/links';
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
       </main>
       <ThemeOrb />
       <MotionToggle />
+      <FantasyCursor />
     </>
   );
 }

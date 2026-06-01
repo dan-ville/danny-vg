@@ -3,14 +3,18 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import App from './App';
 import { ThemeProvider } from './context/ThemeContext';
 import { MotionProvider } from './context/MotionContext';
+import { CursorProvider } from './context/CursorContext';
 
-// App reads the theme (background stage + orb) and motion (toggle), so it needs
-// both providers — exactly as main.tsx mounts them in production.
+// App reads the theme (background stage + orb), motion (toggle), and cursor
+// (fantasy cursor), so it needs all three providers — exactly as main.tsx mounts
+// them in production.
 const renderApp = () =>
   render(
     <MotionProvider>
       <ThemeProvider>
-        <App />
+        <CursorProvider>
+          <App />
+        </CursorProvider>
       </ThemeProvider>
     </MotionProvider>,
   );

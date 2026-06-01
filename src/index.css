@@ -184,6 +184,32 @@ body {
   outline-offset: 3px;
 }
 
+/*
+ * Custom fantasy cursor (desktop only). FantasyCursor renders a fixed sprite and
+ * drives its position via a transform; we hide the native pointer so only the
+ * sprite shows. Both are scoped to `@media (hover: hover)` so touch devices keep
+ * their native behavior and never see the sprite. Tinted to the active --accent.
+ */
+@media (hover: hover) and (pointer: fine) {
+  [data-cursor] {
+    cursor: none;
+  }
+
+  .fantasy-cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 50;
+    /* Nudge the sprite's tip onto the real pointer hotspot. */
+    margin: -3px 0 0 -3px;
+    color: var(--accent);
+    pointer-events: none;
+    user-select: none;
+    will-change: transform;
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 60%, transparent));
+  }
+}
+
 /* Profile picture: rotating gradient accent ring around a dark inner disc. */
 .profile-ring {
   width: 112px;
