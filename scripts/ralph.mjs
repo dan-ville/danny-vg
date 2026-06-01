@@ -59,7 +59,7 @@ const PROMPT = [
   `Skip anything that needs a human or credentials — Vercel deploys, real API keys, the manual-acceptance pass — leave those for the human and do not block on them.`,
   `Set a milestone's status to "done" ONLY when it is fully implemented and verified; keep its "note" current (one line: what's done / what's next).`,
   `When every milestone is done, set top-level "done": true.`,
-  `Commit your code changes AND the updated ${stateRel} before you stop. Do exactly one milestone-slice this run, then stop.`,
+  `Commit your code changes AND the updated ${stateRel} before you stop.`,
 ].join(" ")
 
 function git(args) {

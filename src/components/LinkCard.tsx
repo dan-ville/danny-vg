@@ -1,3 +1,6 @@
+import { useHoverCapable } from '../effects/cursorSprites';
+import { useTilt } from '../effects/tilt';
+
 export interface BrandIcon {
   /** Human-readable brand name, e.g. "Instagram". */
   title: string;
@@ -17,10 +20,15 @@ export interface LinkCardProps {
  * back-navigation returns cleanly. Icon + arrow tint to the active --accent.
  */
 export function LinkCard({ label, href, icon }: LinkCardProps) {
+  const hoverCapable = useHoverCapable();
+  const tilt = useTilt(hoverCapable);
   return (
     <a
       href={href}
       aria-label={label}
+      onPointerMove={tilt.onPointerMove}
+      onPointerLeave={tilt.onPointerLeave}
+      style={{ ...tilt.style, transformStyle: 'preserve-3d', willChange: 'transform' }}
       className="link-card flex h-16 w-full items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 backdrop-blur-md transition active:scale-[0.98]"
     >
       <svg
