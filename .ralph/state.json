@@ -1,5 +1,5 @@
 {
-  "done": false,
+  "done": true,
   "humanTodos": [
     "Generate /public/apple-touch-icon.png (180x180) — referenced by index.html.",
     "Generate /public/og.png (1200x630 social preview) — referenced by index.html.",
@@ -27,8 +27,8 @@
     {
       "id": "M4",
       "title": "Polish: reduced-motion + manual toggle, desktop cursor sprites + picker, hover tilt, tap press/glow, DPR canvas hook, visibilitychange pause, keyboard a11y, safe-area insets, Playwright smoke test",
-      "status": "todo",
-      "note": "IN PROGRESS. DONE: reduced-motion toggle, cursor model+CursorContext, FantasyCursor, cursorSprites+CursorPicker, desktop hover tilt, mobile tap press/glow, shared useResizableCanvas DPR hook. THIS run: shared useAnimationLoop hook (src/hooks/useAnimationLoop.ts) — continuous rAF loop owning dt compute + clamp (DEFAULT_MAX_DT=0.05) and visibilitychange pause: cancels rAF while document.hidden, resumes with a fresh dt=0 frame (no teleport). Refactored GalaxyBackground + MatrixBackground onto it (ctx captured into a ref from the resize handler). RippleCanvas keeps its own on-demand scheduler but now also pauses/resumes on visibilitychange for any live rings. 5 hook tests (controllable rAF mock: mount-start, dt seconds, dt clamp, hidden-pause/visible-resume, unmount cleanup). Verified full suite 176 tests, tsc+build green. NEXT remaining M4: safe-area-inset padding on corner controls (ThemeOrb/CursorPicker/MotionToggle), Playwright smoke test. HUMAN-ONLY: Vercel deploy, apple-touch-icon.png + /public/og.png."
+      "status": "done",
+      "note": "Code complete + verified (179 unit tests + 1 Playwright smoke, tsc+build green). DONE: reduced-motion toggle, cursor model+CursorContext, FantasyCursor, cursorSprites+CursorPicker, desktop hover tilt, mobile tap press/glow, useResizableCanvas DPR hook, useAnimationLoop (rAF dt-clamp + visibilitychange pause/resume), keyboard a11y (accent focus rings + motion→picker→orb tab order). FINAL slice this run: (1) safe-area-inset env() margins on .theme-orb/.motion-toggle/new .cursor-picker rule so corner controls clear the home indicator / edge-to-edge devices — guarded by src/index.css.test.ts (reads index.css via Vite ?raw). (2) Playwright smoke test (e2e/smoke.spec.ts + playwright.config.ts, test:e2e script): boots Vite dev server, asserts content renders, both canvases mount, theme orb cycles galaxy→matrix→rainbow→galaxy (force-click past the intentional idle bob), motion toggle flips data-motion, and zero console/page errors. NOTE: project uses pnpm (npm fails on the pnpm-managed node_modules). HUMAN-ONLY remaining (see humanTodos): Vercel deploy + live manual-acceptance pass, apple-touch-icon.png, /public/og.png."
     }
   ]
 }

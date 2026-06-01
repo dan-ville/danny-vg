@@ -1,8 +1,7 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-
-const css = readFileSync(resolve(process.cwd(), 'src/index.css'), 'utf8');
+// Vite's `?raw` import gives us the stylesheet source as a string — no Node fs
+// APIs (keeps the app tsconfig free of @types/node).
+import css from './index.css?raw';
 
 /**
  * Returns the flat declaration block (text between the first `{` and its `}`) for
