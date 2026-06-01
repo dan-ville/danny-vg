@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useResizableCanvas } from '../hooks/useResizableCanvas';
 import {
   advanceColumn,
   columnCount,
@@ -8,8 +9,6 @@ import {
   type MatrixColumn,
 } from './matrix';
 
-/** DPR cap from the spec — keeps the buffer reasonable on retina/4K. */
-const MAX_DPR = 2;
 /** Glyph cell size in CSS px; also the column width and row height. */
 const CELL = 16;
 /** Per-frame chance a column swaps its head glyph, giving the rain its shimmer. */
@@ -22,41 +21,34 @@ const SHIMMER_CHANCE = 0.12;
  * the fade curve live in the pure `matrix.ts` model; this component owns the
  * canvas, the per-cell glyph grid, and the rAF loop.
  *
- * A shared resizable-canvas hook + visibilitychange pause + reduced-motion
- * handling arrive in M4; this version owns its own resize listener and loop.
+ * DPR-aware sizing + resize handling come from the shared `useResizableCanvas`
+ * hook, which rebuilds the column/grid scene for each new viewport size; the
+ * loop reads that scene through a ref.
  */
 export function MatrixBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Glyph chars are stable per visible cell so the rain reads as text, not
+  // noise; the shimmer mutates individual cells over time. grid[col][row].
+  const sceneRef = useRef<{
+    width: number;
+    height: number;
+    rowCount: number;
+    cols: MatrixColumn[];
+    grid: string[][];
+  }>({ width: 0, height: 0, rowCount: 0, cols: [], grid: [] });
+
+  useResizableCanvas(canvasRef, (_ctx, width, height) => {
+    const rowCount = Math.ceil(height / CELL);
+    const cols = createColumns(columnCount(width, CELL), rowCount);
+    const grid = cols.map(() => Array.from({ length: rowCount + 1 }, () => randomGlyph()));
+    sceneRef.current = { width, height, rowCount, cols, grid };
+  });
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return; // jsdom / unsupported — nothing to animate.
-
-    const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
-    let cols: MatrixColumn[] = [];
-    // Glyph chars are stable per visible cell so the rain reads as text, not
-    // noise; the shimmer mutates individual cells over time. grid[col][row].
-    let grid: string[][] = [];
-    let width = 0;
-    let height = 0;
-    let rowCount = 0;
-
-    const resize = () => {
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = Math.floor(width * dpr);
-      canvas.height = Math.floor(height * dpr);
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      rowCount = Math.ceil(height / CELL);
-      cols = createColumns(columnCount(width, CELL), rowCount);
-      grid = cols.map(() => Array.from({ length: rowCount + 1 }, () => randomGlyph()));
-    };
-    resize();
-    window.addEventListener('resize', resize);
 
     let raf = 0;
     let last = 0;
@@ -65,6 +57,7 @@ export function MatrixBackground() {
       const dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
       last = now;
 
+      const { width, height, rowCount, cols, grid } = sceneRef.current;
       ctx.clearRect(0, 0, width, height);
       ctx.font = `${CELL}px "Courier New", ui-monospace, monospace`;
       ctx.textBaseline = 'top';
@@ -97,10 +90,7 @@ export function MatrixBackground() {
     };
     raf = requestAnimationFrame(frame);
 
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', resize);
-    };
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   return <canvas ref={canvasRef} aria-hidden="true" className="matrix-bg fixed inset-0 -z-10" />;

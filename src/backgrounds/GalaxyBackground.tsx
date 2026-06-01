@@ -1,43 +1,33 @@
 import { useEffect, useRef } from 'react';
+import { useResizableCanvas } from '../hooks/useResizableCanvas';
 import { advanceStar, createStars, starAlpha, starCount, type Star } from './stars';
-
-/** DPR cap from the spec — keeps the buffer reasonable on retina/4K. */
-const MAX_DPR = 2;
 
 /**
  * Cosmic galaxy background: drifting, twinkling star particles drawn on a
  * Canvas 2D layer over the CSS radial-gradient nebula (`.galaxy-bg`). The
  * nebula lives in CSS so it paints instantly; the canvas only adds stars.
  *
- * A shared resizable-canvas hook + visibilitychange pause arrive in M4; this
- * M1 version owns its own resize listener and rAF loop.
+ * DPR-aware sizing + resize handling come from the shared `useResizableCanvas`
+ * hook; this component owns only the rAF loop. Star field is rebuilt for each
+ * new viewport size via the resize handler and read by the loop through a ref.
  */
 export function GalaxyBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const sceneRef = useRef<{ width: number; height: number; stars: Star[] }>({
+    width: 0,
+    height: 0,
+    stars: [],
+  });
+
+  useResizableCanvas(canvasRef, (_ctx, width, height) => {
+    sceneRef.current = { width, height, stars: createStars(starCount(width, height), width, height) };
+  });
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return; // jsdom / unsupported — nothing to animate.
-
-    const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
-    let stars: Star[] = [];
-    let width = 0;
-    let height = 0;
-
-    const resize = () => {
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = Math.floor(width * dpr);
-      canvas.height = Math.floor(height * dpr);
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      stars = createStars(starCount(width, height), width, height);
-    };
-    resize();
-    window.addEventListener('resize', resize);
 
     let raf = 0;
     let last = 0;
@@ -46,6 +36,7 @@ export function GalaxyBackground() {
       const dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
       last = now;
 
+      const { width, height, stars } = sceneRef.current;
       ctx.clearRect(0, 0, width, height);
       for (const star of stars) {
         advanceStar(star, width, height, dt);
@@ -60,10 +51,7 @@ export function GalaxyBackground() {
     };
     raf = requestAnimationFrame(frame);
 
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', resize);
-    };
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   return <canvas ref={canvasRef} aria-hidden="true" className="galaxy-bg fixed inset-0 -z-10" />;

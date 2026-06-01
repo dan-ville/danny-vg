@@ -1,8 +1,7 @@
 import { useEffect, useRef } from 'react';
+import { useResizableCanvas } from '../hooks/useResizableCanvas';
 import { advanceRing, createRipple, isBackgroundTap, isRingExpired, ringAlpha, ringRadius, type Ring } from './ripples';
 
-/** DPR cap from the spec — keeps the buffer reasonable on retina/4K. */
-const MAX_DPR = 2;
 /** Fallback tint if the --accent CSS variable can't be read (e.g. jsdom). */
 const FALLBACK_ACCENT = '#8be9ff';
 
@@ -14,33 +13,22 @@ const FALLBACK_ACCENT = '#8be9ff';
  * a ring cluster only when the tap lands on the empty background, tinted to the
  * active theme accent so the rings spread beneath the floating cards.
  *
- * The rAF loop runs only while rings are alive, so an idle page costs nothing.
- * A shared resizable-canvas hook + visibilitychange pause arrive in M4.
+ * DPR-aware sizing comes from the shared `useResizableCanvas` hook. The rAF loop
+ * runs only while rings are alive, so an idle page costs nothing.
  */
 export function RippleCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const sizeRef = useRef({ width: 0, height: 0 });
+
+  useResizableCanvas(canvasRef, (_ctx, width, height) => {
+    sizeRef.current = { width, height };
+  });
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return; // jsdom / unsupported — nothing to animate.
-
-    const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
-    let width = 0;
-    let height = 0;
-
-    const resize = () => {
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = Math.floor(width * dpr);
-      canvas.height = Math.floor(height * dpr);
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-    resize();
-    window.addEventListener('resize', resize);
 
     const accent = () =>
       getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || FALLBACK_ACCENT;
@@ -54,6 +42,7 @@ export function RippleCanvas() {
       const dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
       last = now;
 
+      const { width, height } = sizeRef.current;
       ctx.clearRect(0, 0, width, height);
       ctx.strokeStyle = accent();
       ctx.lineWidth = 2;
@@ -74,7 +63,7 @@ export function RippleCanvas() {
       } else {
         raf = 0;
         last = 0;
-        ctx.clearRect(0, 0, width, height);
+        ctx.clearRect(0, 0, sizeRef.current.width, sizeRef.current.height);
       }
     };
 
@@ -94,7 +83,6 @@ export function RippleCanvas() {
 
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener('resize', resize);
       window.removeEventListener('pointerdown', onPointerDown);
     };
   }, []);
