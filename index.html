@@ -27,13 +27,22 @@
       rel="stylesheet"
     />
 
-    <!-- Galaxy base color inline to kill white-flash on first paint -->
+    <!--
+      Galaxy base color inline to kill white-flash on first paint. It MUST live
+      on <html> only, never <body>: the theme background canvas is fixed at
+      z-index:-10, which paints above the root (html) background but below normal
+      in-flow content. An opaque <body> background is in-flow content, so it would
+      paint OVER the canvas and hide every theme. <html> keeps the base color
+      (sits behind the canvas → no white flash); <body> stays transparent.
+    -->
     <style>
-      html,
-      body {
+      html {
         margin: 0;
         background: #0a0118;
         color: #f5f3ff;
+      }
+      body {
+        margin: 0;
       }
     </style>
   </head>

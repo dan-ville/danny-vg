@@ -28,6 +28,35 @@ test('the link page boots, renders content, and switches themes/motion', async (
   // Both layered canvases mount (background stars + ripple layer).
   await expect(page.locator('canvas')).not.toHaveCount(0);
 
+  // Regression guard for the "every theme looks identically plain" bug: the dark
+  // base color must live on <html> ONLY. If <body> also carries an opaque
+  // background, it paints OVER the fixed z-index:-10 background canvas and hides
+  // the galaxy/matrix/rainbow layer entirely — the canvas still draws into its
+  // buffer (so a mount/draw check passes) but nothing reaches the screen.
+  const bodyBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  expect(bodyBg, 'body must be transparent so the z-index:-10 background canvas is visible').toBe(
+    'rgba(0, 0, 0, 0)',
+  );
+
+  // ...and the background canvas must actually paint (not merely mount). The
+  // first <canvas> in the DOM is the background layer; the ripple layer is idle.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const c = document.querySelector('canvas');
+          if (!(c instanceof HTMLCanvasElement)) return 0;
+          const ctx = c.getContext('2d');
+          if (!ctx) return 0;
+          const d = ctx.getImageData(0, 0, c.width, c.height).data;
+          let n = 0;
+          for (let i = 3; i < d.length; i += 4) if (d[i] !== 0) n++;
+          return n;
+        }),
+      { message: 'background canvas should have drawn pixels on screen' },
+    )
+    .toBeGreaterThan(0);
+
   // Theme orb cycles galaxy → matrix → rainbow → galaxy. The orb idle-bobs
   // forever by design, so it never passes Playwright's "stable" actionability
   // gate — force past it; visibility/enabled are already asserted above.
