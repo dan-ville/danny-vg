@@ -81,9 +81,22 @@ export function RippleCanvas() {
     };
     window.addEventListener('pointerdown', onPointerDown);
 
+    // Pause the on-demand loop while the tab is hidden; resume any live rings
+    // with a fresh dt so they don't snap outward on return (spec §11).
+    const onVisibility = () => {
+      if (document.hidden) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      } else if (rings.length > 0) {
+        startLoop();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }, []);
 
