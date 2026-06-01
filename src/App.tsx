@@ -2,6 +2,7 @@ import { ProfileHeader } from './components/ProfileHeader';
 import { LinkCard } from './components/LinkCard';
 import { ThemeOrb } from './components/ThemeOrb';
 import { MotionToggle } from './components/MotionToggle';
+import { CursorPicker } from './components/CursorPicker';
 import { BackgroundStage } from './backgrounds/BackgroundStage';
 import { RippleCanvas } from './effects/RippleCanvas';
 import { FantasyCursor } from './effects/FantasyCursor';
@@ -20,8 +21,10 @@ export default function App() {
           ))}
         </nav>
       </main>
-      <ThemeOrb />
+      {/* Corner controls in keyboard tab order: motion → cursor picker → orb. */}
       <MotionToggle />
+      <CursorPicker />
+      <ThemeOrb />
       <FantasyCursor />
     </>
   );

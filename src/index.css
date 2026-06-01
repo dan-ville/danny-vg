@@ -210,6 +210,50 @@ body {
   }
 }
 
+/*
+ * Cursor picker: the desktop-only sprite strip in the bottom-right cluster, left
+ * of the theme orb. Each tile is a small frosted disc holding one fantasy sprite
+ * tinted to --accent; the active tile gains an accent ring. Only ever rendered on
+ * hover-capable devices (the component gates on it), so no media query needed.
+ */
+.cursor-picker__tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--accent);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    transform 150ms ease;
+}
+
+.cursor-picker__tile svg {
+  width: 18px;
+  height: 18px;
+}
+
+.cursor-picker__tile:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.cursor-picker__tile--active {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 0 8px -2px var(--accent);
+}
+
+.cursor-picker__tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* Profile picture: rotating gradient accent ring around a dark inner disc. */
 .profile-ring {
   width: 112px;
