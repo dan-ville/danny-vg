@@ -122,6 +122,10 @@ body {
     inset 0 0 10px rgba(255, 255, 255, 0.18);
   cursor: pointer;
   animation: orb-bob 4s ease-in-out infinite;
+  /* Safe areas (viewport-fit=cover): nudge inward off the home indicator and the
+     right edge so iPhone / edge-to-edge Android devices never clip the orb. */
+  margin-right: env(safe-area-inset-right, 0px);
+  margin-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .theme-orb--pulse {
@@ -172,6 +176,9 @@ body {
   transition:
     background-color 200ms ease,
     transform 200ms ease;
+  /* Safe areas: mirror the orb on the opposite (left) corner. */
+  margin-left: env(safe-area-inset-left, 0px);
+  margin-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .motion-toggle:hover {
@@ -216,6 +223,13 @@ body {
  * tinted to --accent; the active tile gains an accent ring. Only ever rendered on
  * hover-capable devices (the component gates on it), so no media query needed.
  */
+/* Safe areas: the picker shares the bottom-right corner with the orb, so it takes
+   the same inward nudge to stay aligned and clear of the edges. */
+.cursor-picker {
+  margin-right: env(safe-area-inset-right, 0px);
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 .cursor-picker__tile {
   display: flex;
   align-items: center;
