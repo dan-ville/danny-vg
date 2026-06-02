@@ -33,19 +33,19 @@ describe('EffectStage', () => {
     expect(container.querySelector('canvas')).toBeNull();
   });
 
-  it('renders no ripple on matrix — the vortex twist is the matrix effect', () => {
+  it('renders no overlay on matrix — the vortex twist is the matrix effect', () => {
     localStorage.setItem(THEME_STORAGE_KEY, 'matrix');
     const { container } = renderStage();
     expect(container.querySelector('canvas')).toBeNull();
   });
 
-  it('renders the ripple canvas on rainbow', () => {
+  it('renders the smoke canvas on rainbow', () => {
     localStorage.setItem(THEME_STORAGE_KEY, 'rainbow');
     const { container } = renderStage();
     expect(container.querySelector('canvas')).not.toBeNull();
   });
 
-  it('mounts the ripple only once cycling reaches rainbow', async () => {
+  it('mounts the smoke only once cycling reaches rainbow', async () => {
     const user = userEvent.setup();
     const { container } = renderStage(); // galaxy
     expect(container.querySelector('canvas')).toBeNull();
