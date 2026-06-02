@@ -4,8 +4,7 @@
  * rainbow = fireworks sparkler). The particle physics for the comet/sparkler
  * trails and the terminal blink phase live here, free of canvas/DOM, so they can
  * be unit-tested deterministically; ThemeCursor.tsx owns the canvas, pointer
- * tracking, and the rAF loop. Sibling of the other effect models (ripples.ts,
- * rainbowSmoke.ts).
+ * tracking, and the rAF loop. Sibling of the other effect model, rainbowSmoke.ts.
  */
 
 /** A single glowing trail/spark particle. Positions in CSS px. */

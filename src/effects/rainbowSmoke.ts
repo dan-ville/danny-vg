@@ -3,8 +3,8 @@
  * rising, billowing puffs of colored smoke, and the hue sweeps continuously
  * while held so a drag paints a rainbow plume. Kept free of canvas/DOM so the
  * particle physics and palette math can be unit-tested deterministically;
- * RainbowSmoke.tsx owns the canvas, pointer listeners, and the rAF loop. Sibling
- * of `ripples.ts` (the model behind the other overlay effect).
+ * SmokeCanvas.tsx owns the canvas, pointer listeners, and the rAF loop. Sibling
+ * of `cursorTrail.ts` (the theme-cursor model).
  */
 
 /** A single smoke puff. Positions/sizes are in CSS px; angles in radians. */
