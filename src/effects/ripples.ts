@@ -78,15 +78,7 @@ export function isRingExpired(ring: Ring): boolean {
   return ring.age >= ring.delay + ring.lifetime;
 }
 
-/** Foreground elements that should swallow a tap instead of rippling. */
-const INTERACTIVE_SELECTOR = 'a, button, input, textarea, select, [data-no-ripple]';
-
-/**
- * A tap ripples only on the empty background — taps that land on (or inside) an
- * interactive foreground element are ignored, so rings never spawn under a card
- * or the theme orb. Non-Element targets (window, null) count as background.
- */
-export function isBackgroundTap(target: EventTarget | null): boolean {
-  if (!(target instanceof Element)) return true;
-  return target.closest(INTERACTIVE_SELECTOR) === null;
-}
+// The background-tap predicate is shared with other pointer effects (e.g. the
+// galaxy gravity well), so it lives in its own module; re-exported here for the
+// ripple's existing consumers and tests.
+export { isBackgroundTap } from './backgroundTap';

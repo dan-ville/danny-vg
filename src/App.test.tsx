@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import App from './App';
 import { ThemeProvider } from './context/ThemeContext';
+import { THEME_STORAGE_KEY } from './context/theme';
 import { MotionProvider } from './context/MotionContext';
 import { CursorProvider } from './context/CursorContext';
 
@@ -51,7 +52,15 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /switch theme/i })).toBeInTheDocument();
   });
 
-  it('mounts the ripple effect layer above the background, below the foreground', () => {
+  afterEach(() => localStorage.clear());
+
+  it('mounts no ripple on the default galaxy theme — its effect is the gravity well', () => {
+    const { container } = renderApp();
+    expect(container.querySelector('canvas.pointer-events-none')).toBeNull();
+  });
+
+  it('mounts the ripple effect layer at z-0 on a non-galaxy theme', () => {
+    localStorage.setItem(THEME_STORAGE_KEY, 'matrix');
     const { container } = renderApp();
     const ripple = container.querySelector('canvas.pointer-events-none');
     expect(ripple).not.toBeNull();

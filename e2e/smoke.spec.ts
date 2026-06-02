@@ -25,7 +25,9 @@ test('the link page boots, renders content, and switches themes/motion', async (
   const root = page.locator('html');
   await expect(root).toHaveAttribute('data-theme', 'galaxy');
 
-  // Both layered canvases mount (background stars + ripple layer).
+  // The background canvas mounts. On galaxy the tap effect is the gravity well
+  // (inside the background), so no separate ripple layer is present here; the
+  // ripple only mounts on matrix/rainbow.
   await expect(page.locator('canvas')).not.toHaveCount(0);
 
   // Regression guard for the "every theme looks identically plain" bug: the dark
