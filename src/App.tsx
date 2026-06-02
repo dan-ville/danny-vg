@@ -2,10 +2,9 @@ import { ProfileHeader } from './components/ProfileHeader';
 import { LinkCard } from './components/LinkCard';
 import { ThemeOrb } from './components/ThemeOrb';
 import { MotionToggle } from './components/MotionToggle';
-import { CursorPicker } from './components/CursorPicker';
 import { BackgroundStage } from './backgrounds/BackgroundStage';
 import { EffectStage } from './effects/EffectStage';
-import { FantasyCursor } from './effects/FantasyCursor';
+import { ThemeCursor } from './effects/ThemeCursor';
 import { links } from './data/links';
 
 export default function App() {
@@ -21,11 +20,10 @@ export default function App() {
           ))}
         </nav>
       </main>
-      {/* Corner controls in keyboard tab order: motion → cursor picker → orb. */}
+      {/* Corner controls in keyboard tab order: motion → orb. */}
       <MotionToggle />
-      <CursorPicker />
       <ThemeOrb />
-      <FantasyCursor />
+      <ThemeCursor />
     </>
   );
 }

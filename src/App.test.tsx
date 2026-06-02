@@ -4,18 +4,15 @@ import App from './App';
 import { ThemeProvider } from './context/ThemeContext';
 import { THEME_STORAGE_KEY } from './context/theme';
 import { MotionProvider } from './context/MotionContext';
-import { CursorProvider } from './context/CursorContext';
 
-// App reads the theme (background stage + orb), motion (toggle), and cursor
-// (fantasy cursor), so it needs all three providers — exactly as main.tsx mounts
-// them in production.
+// App reads the theme (background stage + orb) and motion (toggle), so it needs
+// both providers — exactly as main.tsx mounts them in production. The theme-driven
+// cursor reads the theme too, but needs no provider of its own.
 const renderApp = () =>
   render(
     <MotionProvider>
       <ThemeProvider>
-        <CursorProvider>
-          <App />
-        </CursorProvider>
+        <App />
       </ThemeProvider>
     </MotionProvider>,
   );

@@ -42,10 +42,4 @@ describe('safe-area insets on bottom-corner controls', () => {
     expect(block).toMatch(/margin-bottom:\s*env\(safe-area-inset-bottom/);
     expect(block).toMatch(/margin-left:\s*env\(safe-area-inset-left/);
   });
-
-  it('keeps the bottom-right cursor picker clear of the home indicator and right edge', () => {
-    const block = ruleBlock('.cursor-picker');
-    expect(block).toMatch(/margin-bottom:\s*env\(safe-area-inset-bottom/);
-    expect(block).toMatch(/margin-right:\s*env\(safe-area-inset-right/);
-  });
 });

@@ -1,4 +1,4 @@
-import { useHoverCapable } from '../effects/cursorSprites';
+import { useHoverCapable } from '../effects/useHoverCapable';
 import { useTilt } from '../effects/tilt';
 import { useTapGlow } from '../effects/press';
 
