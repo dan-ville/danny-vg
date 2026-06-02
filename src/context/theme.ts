@@ -12,7 +12,7 @@ export type Theme = 'galaxy' | 'matrix' | 'rainbow';
 export const THEMES: Theme[] = ['galaxy', 'matrix', 'rainbow'];
 
 /** First-visit theme; also the fallback when nothing valid is stored. */
-export const DEFAULT_THEME: Theme = 'galaxy';
+export const DEFAULT_THEME: Theme = "rainbow"
 
 /** localStorage key the active theme persists under. */
 export const THEME_STORAGE_KEY = 'danny-vg:theme';
