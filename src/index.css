@@ -22,6 +22,16 @@ body {
     system-ui,
     -apple-system,
     sans-serif;
+  /*
+   * The background is interactive (tap to ripple, press-drag the galaxy gravity
+   * well), so a drag must never start a text selection or flash a tap highlight.
+   * The page reads as an app, not a document — nothing here is meant to be
+   * selected — so selection/highlight is suppressed globally.
+   */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Galaxy nebula: deep purple/blue/black radial wash beneath the star canvas. */

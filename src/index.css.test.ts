@@ -16,6 +16,20 @@ function ruleBlock(selector: string): string {
   return css.slice(open + 1, close);
 }
 
+describe('no text highlighting on background interaction', () => {
+  it('makes the page non-selectable so a background press-drag never highlights text', () => {
+    const block = ruleBlock('body');
+    expect(block).toMatch(/(^|[\s;]){0,1}user-select:\s*none/);
+    expect(block).toMatch(/-webkit-user-select:\s*none/); // Safari
+  });
+
+  it('suppresses the mobile tap-highlight flash and long-press callout', () => {
+    const block = ruleBlock('body');
+    expect(block).toMatch(/-webkit-tap-highlight-color:\s*transparent/);
+    expect(block).toMatch(/-webkit-touch-callout:\s*none/);
+  });
+});
+
 describe('safe-area insets on bottom-corner controls', () => {
   it('keeps the bottom-right theme orb clear of the home indicator and right edge', () => {
     const block = ruleBlock('.theme-orb');
