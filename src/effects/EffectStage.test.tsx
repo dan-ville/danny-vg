@@ -33,17 +33,25 @@ describe('EffectStage', () => {
     expect(container.querySelector('canvas')).toBeNull();
   });
 
-  it('renders the ripple canvas on a non-galaxy theme', () => {
+  it('renders no ripple on matrix — the vortex twist is the matrix effect', () => {
     localStorage.setItem(THEME_STORAGE_KEY, 'matrix');
+    const { container } = renderStage();
+    expect(container.querySelector('canvas')).toBeNull();
+  });
+
+  it('renders the ripple canvas on rainbow', () => {
+    localStorage.setItem(THEME_STORAGE_KEY, 'rainbow');
     const { container } = renderStage();
     expect(container.querySelector('canvas')).not.toBeNull();
   });
 
-  it('mounts the ripple when cycling away from galaxy', async () => {
+  it('mounts the ripple only once cycling reaches rainbow', async () => {
     const user = userEvent.setup();
-    const { container } = renderStage(); // galaxy → matrix
+    const { container } = renderStage(); // galaxy
     expect(container.querySelector('canvas')).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'cycle' }));
+    await user.click(screen.getByRole('button', { name: 'cycle' })); // → matrix
+    expect(container.querySelector('canvas')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'cycle' })); // → rainbow
     expect(container.querySelector('canvas')).not.toBeNull();
   });
 });

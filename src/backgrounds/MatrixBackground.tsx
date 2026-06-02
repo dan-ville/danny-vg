@@ -1,6 +1,7 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAnimationLoop } from '../hooks/useAnimationLoop';
 import { useResizableCanvas } from '../hooks/useResizableCanvas';
+import { isBackgroundTap } from '../effects/backgroundTap';
 import {
   advanceColumn,
   columnCount,
@@ -9,6 +10,14 @@ import {
   randomGlyph,
   type MatrixColumn,
 } from './matrix';
+import {
+  advanceTwist,
+  createTwist,
+  isSettled,
+  moveTwist,
+  warpPoint,
+  type VortexTwist,
+} from './vortexTwist';
 
 /** Glyph cell size in CSS px; also the column width and row height. */
 const CELL = 16;
@@ -26,6 +35,12 @@ const SHIMMER_CHANCE = 0.12;
  * rebuilds the column/grid scene for each new viewport size; the rAF loop (with
  * dt clamping + hidden-tab pause) comes from `useAnimationLoop` and reads that
  * scene through a ref.
+ *
+ * The matrix theme's tap interaction is the **vortex twist** (`vortexTwist.ts`):
+ * press-and-hold spawns a swirl that warps the rain around the pointer, the way
+ * the galaxy theme's gravity well bends its star field. It lives here, in the
+ * background, because it has to displace the real glyphs — so `EffectStage`
+ * renders no separate overlay for matrix.
  */
 export function MatrixBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -39,6 +54,9 @@ export function MatrixBackground() {
     cols: MatrixColumn[];
     grid: string[][];
   }>({ width: 0, height: 0, rowCount: 0, cols: [], grid: [] });
+  // The active vortex twist (or null at rest). Kept in its own ref so a resize
+  // rebuilding the rain scene never clobbers an in-flight interaction.
+  const twistRef = useRef<VortexTwist | null>(null);
 
   useResizableCanvas(canvasRef, (ctx, width, height) => {
     ctxRef.current = ctx;
@@ -48,10 +66,44 @@ export function MatrixBackground() {
     sceneRef.current = { width, height, rowCount, cols, grid };
   });
 
+  // Pressing the empty background spawns a held swirl that warps the rain;
+  // dragging recentres it (and stirs it); releasing lets it unwind. Taps that
+  // start on cards/controls are ignored. Mirrors the galaxy gravity well.
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent) => {
+      if (!isBackgroundTap(event.target)) return;
+      twistRef.current = createTwist(event.clientX, event.clientY);
+    };
+    const onPointerMove = (event: PointerEvent) => {
+      if (twistRef.current) moveTwist(twistRef.current, event.clientX, event.clientY);
+    };
+    const onRelease = () => {
+      if (twistRef.current) twistRef.current.held = false;
+    };
+    window.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onRelease);
+    window.addEventListener('pointercancel', onRelease);
+    return () => {
+      window.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onRelease);
+      window.removeEventListener('pointercancel', onRelease);
+    };
+  }, []);
+
   useAnimationLoop((dt) => {
     const ctx = ctxRef.current;
     if (!ctx) return; // jsdom / unsupported — nothing to animate.
     const { width, height, rowCount, cols, grid } = sceneRef.current;
+
+    // Advance the swirl (if any), dropping it once a release has fully unwound.
+    const twist = twistRef.current;
+    if (twist) {
+      advanceTwist(twist, dt);
+      if (isSettled(twist)) twistRef.current = null;
+    }
+
     ctx.clearRect(0, 0, width, height);
     ctx.font = `${CELL}px "Courier New", ui-monospace, monospace`;
     ctx.textBaseline = 'top';
@@ -77,7 +129,20 @@ export function MatrixBackground() {
         } else {
           ctx.fillStyle = `rgba(59,255,122,${intensity})`; // fading green trail
         }
-        ctx.fillText(glyph, c * CELL, row * CELL);
+        if (twist) {
+          const w = warpPoint(twist, c * CELL, row * CELL);
+          if (w.rot !== 0) {
+            ctx.save();
+            ctx.translate(w.x, w.y);
+            ctx.rotate(w.rot);
+            ctx.fillText(glyph, 0, 0);
+            ctx.restore();
+          } else {
+            ctx.fillText(glyph, w.x, w.y);
+          }
+        } else {
+          ctx.fillText(glyph, c * CELL, row * CELL);
+        }
       }
     }
   });
