@@ -30,3 +30,6 @@ Thumbs.db
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Visual brainstorming companion
+.superpowers/
