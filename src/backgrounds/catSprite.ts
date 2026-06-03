@@ -84,6 +84,25 @@ export const HIT_IMPACT_TIME = 0.42;
 export const WAIT_MIN = 0.5;
 export const WAIT_MAX = 1.9;
 
+/** Smaller viewport dimension the cat's base size + speeds are tuned for (px) —
+ * a laptop-class screen (≈720p). At or above this the cat is full size. */
+const REFERENCE_MIN_SIDE = 720;
+/** Floor the viewport scale can't shrink past, so the cat stays visible. */
+const MIN_VIEW_SCALE = 0.5;
+
+/**
+ * Size/speed multiplier for the current viewport. The art and motion are tuned
+ * for a roomy desktop; on a small phone the same px sizes make the cat dominate
+ * the screen and rocket across it. We scale off the *smaller* viewport side so a
+ * short landscape phone shrinks the cat just like a narrow portrait one.
+ * Shrinking size *and* speed together keeps its visual pace (body-lengths per
+ * second) constant — a small cat that still pads and pounces at a natural rate.
+ * Clamped to [MIN, 1].
+ */
+export function viewScale(width: number, height: number = Infinity): number {
+  return Math.min(1, Math.max(MIN_VIEW_SCALE, Math.min(width, height) / REFERENCE_MIN_SIDE));
+}
+
 const NO_IMPACT: { x: number; y: number }[] = [];
 const NO_STEP: CatStep = { smack: null, impacts: NO_IMPACT };
 
@@ -189,9 +208,22 @@ export function advanceCat(
   dt: number,
   width: number,
   height: number,
-  opts: { roam?: boolean; rand?: () => number; hammerReach?: { x: number; y: number } } = {},
+  opts: {
+    roam?: boolean;
+    rand?: () => number;
+    hammerReach?: { x: number; y: number };
+    /** Viewport scale (see {@link viewScale}) — shrinks speeds + reach to match
+     * a smaller on-screen cat. Defaults to 1 (desktop / pure tests). */
+    scale?: number;
+  } = {},
 ): CatStep {
-  const { roam = true, rand = Math.random, hammerReach: reach = NO_REACH } = opts;
+  const { roam = true, rand = Math.random, hammerReach: reach = NO_REACH, scale = 1 } = opts;
+  // Scale travel + catch distances with the cat's on-screen size so its motion
+  // reads the same on every viewport (see viewScale).
+  const roamSpeed = ROAM_SPEED * scale;
+  const pounceSpeed = POUNCE_SPEED * scale;
+  const smackSpeed = SMACK_SPEED * scale;
+  const hitRadius = POUNCE_HIT_RADIUS * scale;
   cat.stateTime += dt;
   // `phase` drives the cyclic walk/idle frames; freeze it when roaming is off
   // (reduced motion) so the cat holds still rather than idle-bobbing. The pounce
@@ -223,9 +255,9 @@ export function advanceCat(
         cat.vy = 0;
         return NO_STEP;
       }
-      const step = Math.min(dist, ROAM_SPEED * dt);
-      cat.vx = (dx / dist) * ROAM_SPEED;
-      cat.vy = (dy / dist) * ROAM_SPEED;
+      const step = Math.min(dist, roamSpeed * dt);
+      cat.vx = (dx / dist) * roamSpeed;
+      cat.vy = (dy / dist) * roamSpeed;
       cat.x += (dx / dist) * step;
       cat.y += (dy / dist) * step;
       faceByVelocity(cat);
@@ -256,12 +288,12 @@ export function advanceCat(
       const dy = cat.targetY - cat.y;
       const dist = Math.hypot(dx, dy);
       cat.facing = dx >= 0 ? 1 : -1;
-      const step = POUNCE_SPEED * dt;
+      const step = pounceSpeed * dt;
 
       if (step < dist) {
         const inv = 1 / dist;
-        cat.vx = dx * inv * POUNCE_SPEED;
-        cat.vy = dy * inv * POUNCE_SPEED;
+        cat.vx = dx * inv * pounceSpeed;
+        cat.vy = dy * inv * pounceSpeed;
         cat.x += dx * inv * step;
         cat.y += dy * inv * step;
         return NO_STEP;
@@ -279,11 +311,11 @@ export function advanceCat(
       const hx = cat.x + cat.facing * reach.x;
       const hy = cat.y + reach.y;
       const adist = Math.hypot(cat.aimX - hx, cat.aimY - hy);
-      if (adist <= POUNCE_HIT_RADIUS) {
+      if (adist <= hitRadius) {
         // Caught it: stash the fling velocity (along the swing) and play the
         // mallet whack. The yarn isn't launched yet — that happens at the
         // swing's impact frame.
-        cat.hitVx = cat.facing * SMACK_SPEED;
+        cat.hitVx = cat.facing * smackSpeed;
         cat.hitVy = 0;
         cat.state = 'hit';
         cat.stateTime = 0;
