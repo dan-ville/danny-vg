@@ -56,17 +56,20 @@ describe('App', () => {
     window.history.replaceState(null, '', '/');
   });
 
-  it('mounts no ripple on galaxy — its effect is the gravity well', () => {
+  // The smoke/ripple effect layer sits at z-0; the always-mounted theme cursor
+  // also carries `pointer-events-none` but at z-50, so we key off z-0 to identify
+  // the effect layer specifically.
+  it('mounts no smoke layer on galaxy — its effect is the gravity well', () => {
     localStorage.setItem(THEME_STORAGE_KEY, 'galaxy');
     const { container } = renderApp();
-    expect(container.querySelector('canvas.pointer-events-none')).toBeNull();
+    expect(container.querySelector('canvas.z-0')).toBeNull();
   });
 
   it('mounts the smoke effect layer at z-0 on rainbow (matrix has its own vortex)', () => {
     localStorage.setItem(THEME_STORAGE_KEY, 'rainbow');
     const { container } = renderApp();
-    const ripple = container.querySelector('canvas.pointer-events-none');
+    const ripple = container.querySelector('canvas.z-0'); // between -z-10 bg and z-10 content
     expect(ripple).not.toBeNull();
-    expect(ripple!.className).toContain('z-0'); // between -z-10 bg and z-10 content
+    expect(ripple!.className).toContain('pointer-events-none');
   });
 });

@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useAnimationLoop } from '../hooks/useAnimationLoop';
 import { useResizableCanvas } from '../hooks/useResizableCanvas';
-import { useHoverCapable } from './useHoverCapable';
 import {
   advanceParticle,
   blinkOn,
@@ -26,14 +25,13 @@ const COMET_RATE = 2;
 const SPARKLER_RATE = 4;
 
 /**
- * Desktop-only, theme-driven custom cursor. Mounts only on hover-capable devices
- * (touch keeps its native pointer); the inner {@link CursorCanvas} does the work
- * so its canvas exists from first render and the DPR-aware `useResizableCanvas`
- * binds correctly.
+ * Theme-driven custom cursor. On desktop it follows the mouse (the native
+ * pointer is hidden via `[data-cursor]`, scoped to hover-capable devices in
+ * index.css). On touch there is no hover, so it follows the finger while a drag
+ * is in progress and clears when the finger lifts — see {@link CursorCanvas}.
  */
 export function ThemeCursor() {
-  const enabled = useHoverCapable();
-  return enabled ? <CursorCanvas /> : null;
+  return <CursorCanvas />;
 }
 
 /**
@@ -77,13 +75,28 @@ function CursorCanvas() {
     return () => root.removeAttribute('data-cursor');
   }, [theme]);
 
-  // Track the real pointer.
+  // Track the real pointer. pointerdown seeds the target so even a stationary
+  // tap shows the cursor; pointermove follows a drag (the only signal touch
+  // gives — touch has no hover). On a touch lift there is no pointer left to
+  // follow, so drop the target and let the trail clear instead of stranding a
+  // frozen caret/yarn at the last touch point; a mouse keeps its position.
   useEffect(() => {
-    const onMove = (event: PointerEvent) => {
+    const onPoint = (event: PointerEvent) => {
       targetRef.current = { x: event.clientX, y: event.clientY };
     };
-    window.addEventListener('pointermove', onMove);
-    return () => window.removeEventListener('pointermove', onMove);
+    const onLift = (event: PointerEvent) => {
+      if (event.pointerType !== 'mouse') targetRef.current = null;
+    };
+    window.addEventListener('pointermove', onPoint);
+    window.addEventListener('pointerdown', onPoint);
+    window.addEventListener('pointerup', onLift);
+    window.addEventListener('pointercancel', onLift);
+    return () => {
+      window.removeEventListener('pointermove', onPoint);
+      window.removeEventListener('pointerdown', onPoint);
+      window.removeEventListener('pointerup', onLift);
+      window.removeEventListener('pointercancel', onLift);
+    };
   }, []);
 
   // A theme switch starts the new cursor fresh. For kitty, publish a smack hook

@@ -16,6 +16,16 @@ body,
   min-height: 100%;
 }
 
+/*
+ * The whole surface is a one-screen interactive canvas you drag on, not a
+ * scrollable document, so the page must never scroll or rubber-band under a
+ * finger-drag. `overscroll-behavior: none` also kills pull-to-refresh / bounce
+ * on the browsers that honor it (Chrome, Firefox, iOS Safari 16+).
+ */
+html {
+  overscroll-behavior: none;
+}
+
 body {
   font-family:
     'Inter',
@@ -32,6 +42,21 @@ body {
   -webkit-user-select: none;
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
+  /*
+   * Mobile drag fix. Background effects (gravity well, smoke, cat pounce, yarn)
+   * are driven by pointer-drags on this surface; without these a touch-drag
+   * scrolls and rubber-bands the page on mobile Safari, making it unusable.
+   *   - touch-action: none  → the reliable cross-browser lever (iOS Safari 13+,
+   *     Chrome, Firefox): a drag is an effect gesture, not a scroll/pinch-zoom.
+   *     Tap/click on links and the corner controls still fire normally.
+   *   - overscroll-behavior + overflow: hidden → belt-and-suspenders so the
+   *     single-viewport layout can't scroll or bounce.
+   * The layout is one screen by design (min-h-dvh + justify-center), so nothing
+   * is lost by opting out of scrolling.
+   */
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
 }
 
 /* Galaxy nebula: deep purple/blue/black radial wash beneath the star canvas. */
