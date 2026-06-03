@@ -30,6 +30,25 @@ describe('no text highlighting on background interaction', () => {
   });
 });
 
+describe('mobile: a finger-drag paints effects, never scrolls or bounces the page', () => {
+  // Regression guard for the "page scrolls/rubber-bands when you drag on mobile
+  // Safari" bug: the background is a one-screen interactive canvas, so the body
+  // must opt out of native touch scrolling/zoom. touch-action:none is the
+  // reliable cross-browser lever; overscroll-behavior + overflow:hidden are the
+  // belt-and-suspenders for bounce / pull-to-refresh.
+  it('opts the body out of touch-driven scroll and zoom', () => {
+    const block = ruleBlock('body');
+    expect(block).toMatch(/touch-action:\s*none/);
+    expect(block).toMatch(/overscroll-behavior:\s*none/);
+    expect(block).toMatch(/overflow:\s*hidden/);
+  });
+
+  it('also disables overscroll bounce on the root element', () => {
+    const block = ruleBlock('html');
+    expect(block).toMatch(/overscroll-behavior:\s*none/);
+  });
+});
+
 describe('safe-area insets on bottom-corner controls', () => {
   it('keeps the bottom-right theme orb clear of the home indicator and right edge', () => {
     const block = ruleBlock('.theme-orb');
