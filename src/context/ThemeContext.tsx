@@ -2,16 +2,17 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import {
   DEFAULT_THEME,
   THEME_ACCENTS,
-  loadTheme,
   nextTheme,
+  resolveInitialTheme,
   saveTheme,
+  withThemeParam,
   type Theme,
 } from './theme';
 
 interface ThemeContextValue {
   /** Currently active background theme. */
   theme: Theme;
-  /** Advance galaxy -> matrix -> rainbow -> galaxy (what the orb calls). */
+  /** Advance galaxy -> matrix -> rainbow -> kitty -> galaxy (what the orb calls). */
   cycleTheme: () => void;
   /** Jump straight to a specific theme. */
   setTheme: (theme: Theme) => void;
@@ -40,28 +41,30 @@ function applyTheme(theme: Theme): void {
  * store library; canvas loops will read the latest value via refs in M4.
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Lazy init so a returning visitor never flashes the default theme first.
+  // Lazy init so a returning visitor never flashes the default theme first. A
+  // `?theme=` link wins over the persisted choice (see resolveInitialTheme).
   const [theme, setThemeState] = useState<Theme>(() =>
-    typeof window === 'undefined' ? DEFAULT_THEME : loadTheme(window.localStorage),
+    typeof window === 'undefined'
+      ? DEFAULT_THEME
+      : resolveInitialTheme(window.localStorage, window.location.search),
   );
 
-  // Keep the document root in sync with the active theme (runs on mount too).
+  // Mirror the active theme onto the document root, localStorage, and the URL
+  // (`?theme=`). The URL write keeps the address bar shareable at any moment and
+  // makes a param-opened theme survive a refresh; replaceState avoids spamming
+  // history. Runs on mount too, so an opened link persists its theme.
   useEffect(() => {
     applyTheme(theme);
+    if (typeof window === 'undefined') return;
+    saveTheme(theme, window.localStorage);
+    const { pathname, search, hash } = window.location;
+    const next = withThemeParam(search, theme);
+    if (next !== search) window.history.replaceState(null, '', `${pathname}${next}${hash}`);
   }, [theme]);
 
-  const setTheme = useCallback((next: Theme) => {
-    setThemeState(next);
-    if (typeof window !== 'undefined') saveTheme(next, window.localStorage);
-  }, []);
+  const setTheme = useCallback((next: Theme) => setThemeState(next), []);
 
-  const cycleTheme = useCallback(() => {
-    setThemeState((current) => {
-      const next = nextTheme(current);
-      if (typeof window !== 'undefined') saveTheme(next, window.localStorage);
-      return next;
-    });
-  }, []);
+  const cycleTheme = useCallback(() => setThemeState((current) => nextTheme(current)), []);
 
   return (
     <ThemeContext.Provider value={{ theme, cycleTheme, setTheme }}>{children}</ThemeContext.Provider>

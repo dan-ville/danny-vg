@@ -100,6 +100,30 @@ body {
 }
 
 /*
+ * Kitty playground: a light-tan room beneath the cat canvas, slightly warmer
+ * toward the bottom so the floor the cat pads across reads as ground. The cat
+ * lives in KittyBackground; this is just the wash behind the transparent canvas.
+ */
+.kitty-bg {
+  background: linear-gradient(to bottom, #f4e8ce 0%, #efe1c4 60%, #e7d4ad 100%);
+}
+
+/*
+ * Kitty is the one light theme, so flip text to a warm dark brown and give the
+ * cards a cream frost with a soft warm border — light text / white-on-white
+ * frost (tuned for the dark themes) would vanish on the tan.
+ */
+[data-theme='kitty'] {
+  color: #4e3a22;
+}
+
+[data-theme='kitty'] .link-card {
+  background-color: rgba(255, 251, 242, 0.6);
+  border-color: rgba(120, 82, 40, 0.18);
+  backdrop-filter: blur(8px);
+}
+
+/*
  * Background crossfade: the incoming theme layer fades in over the outgoing one
  * (BackgroundStage drops the old layer once this completes). User-initiated, so
  * it is intentionally kept under reduced-motion.
@@ -203,7 +227,8 @@ body {
 
 /*
  * Theme-driven custom cursor (desktop only). ThemeCursor paints a per-theme
- * cursor (galaxy comet / matrix terminal caret / rainbow sparkler) on a canvas;
+ * cursor (galaxy comet / matrix terminal caret / rainbow sparkler / kitty yarn
+ * ball) on a canvas;
  * we hide the native pointer so only it shows. Scoped to `@media (hover: hover)`
  * so touch devices keep their native behavior and never see the canvas cursor.
  */

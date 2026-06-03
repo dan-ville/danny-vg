@@ -3,7 +3,7 @@ import { useTheme } from '../context/ThemeContext';
 
 /**
  * Floating theme switcher: a fixed bottom-right orb that cycles
- * galaxy → matrix → rainbow → galaxy on click. Its surface paints from
+ * galaxy → matrix → rainbow → kitty → galaxy on click. Its surface paints from
  * `--accent`/`--accent-2`, which flip with the theme, so it always reflects the
  * active background. It idle-bobs (CSS, stilled under reduced-motion) and pulses
  * briefly on click for cause-and-effect feedback. A native `<button>`, a
