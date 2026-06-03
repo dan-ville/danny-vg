@@ -7,6 +7,9 @@ import {
   nextTheme,
   loadTheme,
   saveTheme,
+  themeFromSearch,
+  resolveInitialTheme,
+  withThemeParam,
   THEME_STORAGE_KEY,
 } from './theme';
 
@@ -26,18 +29,19 @@ function memoryStorage(initial: Record<string, string> = {}): Storage {
 }
 
 describe('theme model', () => {
-  it('lists the three themes in cycle order', () => {
-    expect(THEMES).toEqual(['galaxy', 'matrix', 'rainbow']);
+  it('lists the four themes in cycle order', () => {
+    expect(THEMES).toEqual(['galaxy', 'matrix', 'rainbow', 'kitty']);
   });
 
-  it('defaults to galaxy', () => {
-    expect(DEFAULT_THEME).toBe('galaxy');
+  it('defaults to rainbow', () => {
+    expect(DEFAULT_THEME).toBe('rainbow');
   });
 
-  it('cycles galaxy -> matrix -> rainbow -> galaxy', () => {
+  it('cycles galaxy -> matrix -> rainbow -> kitty -> galaxy', () => {
     expect(nextTheme('galaxy')).toBe('matrix');
     expect(nextTheme('matrix')).toBe('rainbow');
-    expect(nextTheme('rainbow')).toBe('galaxy');
+    expect(nextTheme('rainbow')).toBe('kitty');
+    expect(nextTheme('kitty')).toBe('galaxy');
   });
 
   it('defines an accent pair for every theme', () => {
@@ -51,6 +55,7 @@ describe('theme model', () => {
     expect(isTheme('galaxy')).toBe(true);
     expect(isTheme('matrix')).toBe(true);
     expect(isTheme('rainbow')).toBe(true);
+    expect(isTheme('kitty')).toBe(true);
     expect(isTheme('cosmic')).toBe(false);
     expect(isTheme(null)).toBe(false);
     expect(isTheme(42)).toBe(false);
@@ -59,7 +64,7 @@ describe('theme model', () => {
 
 describe('theme persistence', () => {
   it('returns the default when nothing is stored', () => {
-    expect(loadTheme(memoryStorage())).toBe('galaxy');
+    expect(loadTheme(memoryStorage())).toBe('rainbow');
   });
 
   it('returns a previously stored valid theme', () => {
@@ -67,7 +72,7 @@ describe('theme persistence', () => {
   });
 
   it('falls back to the default on a corrupt stored value', () => {
-    expect(loadTheme(memoryStorage({ [THEME_STORAGE_KEY]: 'banana' }))).toBe('galaxy');
+    expect(loadTheme(memoryStorage({ [THEME_STORAGE_KEY]: 'banana' }))).toBe('rainbow');
   });
 
   it('round-trips through save then load', () => {
@@ -89,7 +94,37 @@ describe('theme persistence', () => {
       },
       removeItem: () => {},
     };
-    expect(loadTheme(throwing)).toBe('galaxy');
+    expect(loadTheme(throwing)).toBe('rainbow');
     expect(() => saveTheme('matrix', throwing)).not.toThrow();
+  });
+});
+
+describe('theme URL param', () => {
+  it('reads a valid theme from the ?theme= param', () => {
+    expect(themeFromSearch('?theme=kitty')).toBe('kitty');
+    expect(themeFromSearch('?foo=1&theme=matrix')).toBe('matrix');
+  });
+
+  it('returns null when the param is absent or not a known theme', () => {
+    expect(themeFromSearch('')).toBeNull();
+    expect(themeFromSearch('?theme=banana')).toBeNull();
+    expect(themeFromSearch('?other=galaxy')).toBeNull();
+  });
+
+  it('lets a valid param override the stored theme', () => {
+    const storage = memoryStorage({ [THEME_STORAGE_KEY]: 'galaxy' });
+    expect(resolveInitialTheme(storage, '?theme=kitty')).toBe('kitty');
+  });
+
+  it('falls back to the stored theme when no param is present', () => {
+    const storage = memoryStorage({ [THEME_STORAGE_KEY]: 'matrix' });
+    expect(resolveInitialTheme(storage, '')).toBe('matrix');
+    expect(resolveInitialTheme(storage, '?theme=banana')).toBe('matrix'); // invalid → ignored
+  });
+
+  it('writes the theme into a query string, preserving other params', () => {
+    expect(withThemeParam('', 'kitty')).toBe('?theme=kitty');
+    expect(withThemeParam('?theme=galaxy', 'matrix')).toBe('?theme=matrix');
+    expect(withThemeParam('?ref=twitter', 'rainbow')).toBe('?ref=twitter&theme=rainbow');
   });
 });

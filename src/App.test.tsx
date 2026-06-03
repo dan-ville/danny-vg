@@ -49,9 +49,15 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /switch theme/i })).toBeInTheDocument();
   });
 
-  afterEach(() => localStorage.clear());
+  // The theme provider writes ?theme= to the URL; reset both so a leaked param
+  // can't override the next test's localStorage-seeded theme.
+  afterEach(() => {
+    localStorage.clear();
+    window.history.replaceState(null, '', '/');
+  });
 
-  it('mounts no ripple on the default galaxy theme — its effect is the gravity well', () => {
+  it('mounts no ripple on galaxy — its effect is the gravity well', () => {
+    localStorage.setItem(THEME_STORAGE_KEY, 'galaxy');
     const { container } = renderApp();
     expect(container.querySelector('canvas.pointer-events-none')).toBeNull();
   });

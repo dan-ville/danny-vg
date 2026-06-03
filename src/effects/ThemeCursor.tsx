@@ -14,6 +14,9 @@ import {
   SPARKLER_SPARKS,
   type CursorParticle,
 } from './cursorTrail';
+import { advanceYarn, createYarn, followPointer, smackYarn, type YarnBall } from './yarnBall';
+import { kittyLink } from './kittyLink';
+import { drawYarn } from '../backgrounds/kittySprites';
 
 /** How fast the comet head eases toward the real pointer (fraction per frame). */
 const COMET_EASE = 0.28;
@@ -40,6 +43,9 @@ export function ThemeCursor() {
  * - **matrix** → a blinking green terminal caret block (no trail).
  * - **rainbow** → a fireworks sparkler: a white-hot tip flinging colored sparks
  *   that arc and fall under gravity.
+ * - **kitty** → a ball of yarn that trails the pointer with a little weight and,
+ *   when the roaming cat pounces, goes flying and ricochets off the edges (its
+ *   position + a smack hook are shared with the cat via {@link kittyLink}).
  *
  * The native cursor is hidden by `[data-cursor] { cursor: none }` (scoped to
  * `@media (hover: hover)` in index.css); this sets `data-cursor` on the root
@@ -54,6 +60,8 @@ function CursorCanvas() {
   const particlesRef = useRef<CursorParticle[]>([]);
   const targetRef = useRef<{ x: number; y: number } | null>(null);
   const headRef = useRef<{ x: number; y: number } | null>(null);
+  const yarnRef = useRef<YarnBall | null>(null);
+  const prevTargetRef = useRef<{ x: number; y: number } | null>(null);
   const themeRef = useRef(theme);
   themeRef.current = theme;
 
@@ -78,9 +86,27 @@ function CursorCanvas() {
     return () => window.removeEventListener('pointermove', onMove);
   }, []);
 
-  // A theme switch starts the new cursor's trail fresh.
+  // A theme switch starts the new cursor fresh. For kitty, publish a smack hook
+  // the roaming cat calls on contact; clear it (and the shared yarn position)
+  // whenever the kitty cursor isn't the live one so the cat never smacks a ball
+  // that isn't there.
   useEffect(() => {
     particlesRef.current = [];
+    yarnRef.current = null;
+    kittyLink.yarn = null;
+    kittyLink.pin = null;
+    if (theme === 'kitty') {
+      kittyLink.smack = (vx, vy) => {
+        const yarn = yarnRef.current;
+        if (yarn) smackYarn(yarn, vx, vy);
+      };
+      return () => {
+        kittyLink.smack = null;
+        kittyLink.yarn = null;
+        kittyLink.pin = null;
+      };
+    }
+    kittyLink.smack = null;
   }, [theme]);
 
   useAnimationLoop((dt) => {
@@ -92,6 +118,36 @@ function CursorCanvas() {
     const target = targetRef.current;
     if (!target) return; // pointer hasn't moved yet — draw nothing.
     const list = particlesRef.current;
+
+    if (themeRef.current === 'kitty') {
+      // Yarn ball: tracks the pointer at rest, flies + ricochets after a smack.
+      ctx.globalCompositeOperation = 'source-over';
+      const yarn = yarnRef.current ?? (yarnRef.current = createYarn(target.x, target.y));
+
+      if (kittyLink.pin) {
+        // The cat trapped the ball under its raised mallet — hold it at the pin
+        // so a moving cursor can't drag it off the anvil. It's flung (and the
+        // pin cleared) on the swing's impact frame.
+        yarn.x = kittyLink.pin.x;
+        yarn.y = kittyLink.pin.y;
+        yarn.airborne = false;
+        prevTargetRef.current = { x: target.x, y: target.y }; // don't count as "moved"
+      } else {
+        // Moving the mouse reclaims control mid-flight — the ball snaps back to
+        // following the cursor instead of finishing its bounce — except during
+        // the brief post-smack grace window, so a fresh hit always flings clear.
+        const prev = prevTargetRef.current;
+        const moved = prev !== null && (prev.x !== target.x || prev.y !== target.y);
+        if (yarn.airborne && moved && yarn.launchGrace <= 0) yarn.airborne = false;
+        prevTargetRef.current = { x: target.x, y: target.y };
+
+        if (yarn.airborne) advanceYarn(yarn, dt, width, height);
+        else followPointer(yarn, target.x, target.y);
+      }
+      kittyLink.yarn = { x: yarn.x, y: yarn.y };
+      drawYarn(ctx, yarn.x, yarn.y, yarn.angle);
+      return;
+    }
 
     if (themeRef.current === 'galaxy') {
       // Comet: head eases toward the pointer, sparks shed from the head.

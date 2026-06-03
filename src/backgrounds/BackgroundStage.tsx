@@ -4,6 +4,7 @@ import type { Theme } from '../context/theme';
 import { GalaxyBackground } from './GalaxyBackground';
 import { MatrixBackground } from './MatrixBackground';
 import { RainbowBackground } from './RainbowBackground';
+import { KittyBackground } from './KittyBackground';
 
 /**
  * Crossfade duration. Must match the `bg-crossfade-enter` keyframe in index.css:
@@ -18,6 +19,8 @@ function backgroundFor(theme: Theme): ReactElement {
       return <MatrixBackground />;
     case 'rainbow':
       return <RainbowBackground />;
+    case 'kitty':
+      return <KittyBackground />;
     default:
       return <GalaxyBackground />;
   }

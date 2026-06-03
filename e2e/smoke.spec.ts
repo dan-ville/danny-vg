@@ -3,9 +3,9 @@ import { test, expect, type ConsoleMessage } from '@playwright/test';
 /**
  * M4 smoke test: the whole app actually boots and its signature interactions
  * work in a real browser — content renders, the layered canvases mount, the
- * theme orb cycles galaxy → matrix → rainbow → galaxy, and the motion toggle
- * flips the document's resolved motion state. Guards the wiring that jsdom unit
- * tests can't exercise (real canvas, real CSS, real event loop).
+ * theme orb cycles galaxy → matrix → rainbow → kitty → galaxy, and the motion
+ * toggle flips the document's resolved motion state. Guards the wiring that
+ * jsdom unit tests can't exercise (real canvas, real CSS, real event loop).
  */
 test('the link page boots, renders content, and switches themes/motion', async ({ page }) => {
   const errors: string[] = [];
@@ -14,6 +14,18 @@ test('the link page boots, renders content, and switches themes/motion', async (
   });
   page.on('pageerror', (err) => errors.push(String(err)));
 
+  // Pin galaxy before the app boots so the canvas-paint check below is
+  // deterministic: galaxy paints its star field straight into the background
+  // canvas, whereas the default (rainbow) paints its wash in CSS and leaves the
+  // first canvas (the idle smoke overlay) blank until a tap.
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem('danny-vg:theme', 'galaxy');
+    } catch {
+      /* private mode — the app falls back to its default, fine for the rest. */
+    }
+  });
+
   await page.goto('/');
 
   // Foreground content.
@@ -21,7 +33,7 @@ test('the link page boots, renders content, and switches themes/motion', async (
   await expect(page.getByRole('link', { name: 'Instagram' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'TikTok' })).toBeVisible();
 
-  // Default theme is the persisted/galaxy default on first load.
+  // Galaxy, as pinned above.
   const root = page.locator('html');
   await expect(root).toHaveAttribute('data-theme', 'galaxy');
 
@@ -59,15 +71,17 @@ test('the link page boots, renders content, and switches themes/motion', async (
     )
     .toBeGreaterThan(0);
 
-  // Theme orb cycles galaxy → matrix → rainbow → galaxy. The orb idle-bobs
-  // forever by design, so it never passes Playwright's "stable" actionability
-  // gate — force past it; visibility/enabled are already asserted above.
+  // Theme orb cycles galaxy → matrix → rainbow → kitty → galaxy. The orb
+  // idle-bobs forever by design, so it never passes Playwright's "stable"
+  // actionability gate — force past it; visibility/enabled are asserted above.
   const orb = page.getByRole('button', { name: /switch theme/i });
   await expect(orb).toBeVisible();
   await orb.click({ force: true });
   await expect(root).toHaveAttribute('data-theme', 'matrix');
   await orb.click({ force: true });
   await expect(root).toHaveAttribute('data-theme', 'rainbow');
+  await orb.click({ force: true });
+  await expect(root).toHaveAttribute('data-theme', 'kitty');
   await orb.click({ force: true });
   await expect(root).toHaveAttribute('data-theme', 'galaxy');
 
