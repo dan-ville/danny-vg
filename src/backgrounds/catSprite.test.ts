@@ -323,4 +323,22 @@ describe('advanceCat — pounce lifecycle', () => {
     advanceCat(cat, RECOVER_TIME + 0.01, W, H, { rand: () => 0.5 });
     expect(cat.state).toBe('roam');
   });
+
+  it('resumes moving immediately after recovering — no idle dawdle', () => {
+    const cat = createCat(W, H, () => 0.5);
+    cat.state = 'recover';
+    cat.stateTime = 0;
+    // Sit the cat far from the spot rand=0.5 picks (≈400,368) so it has
+    // somewhere to walk to.
+    cat.x = 100;
+    cat.y = 100;
+    // Finish the recover beat: it enters roam with no wait queued...
+    advanceCat(cat, RECOVER_TIME + 0.01, W, H, { rand: () => 0.5 });
+    expect(cat.state).toBe('roam');
+    expect(cat.wait).toBe(0);
+    // ...so the very next frame it's already padding toward its next spot.
+    const before = { x: cat.x, y: cat.y };
+    advanceCat(cat, 0.05, W, H, { rand: () => 0.5 });
+    expect(Math.hypot(cat.x - before.x, cat.y - before.y)).toBeGreaterThan(0);
+  });
 });

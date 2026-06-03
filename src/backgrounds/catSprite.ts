@@ -358,7 +358,10 @@ export function advanceCat(
         const next = pickRoamTarget(width, height, rand);
         cat.targetX = next.x;
         cat.targetY = next.y;
-        cat.wait = WAIT_MIN + rand() * (WAIT_MAX - WAIT_MIN);
+        // No dawdle here: after a hit the cat springs straight back into
+        // padding toward its next spot instead of sitting idle for a beat. The
+        // ambient dawdle only happens between freely-chosen roam spots.
+        cat.wait = 0;
         cat.state = 'roam';
         cat.stateTime = 0;
       }
