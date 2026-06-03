@@ -97,3 +97,35 @@ test('the custom cursor follows touch input', async ({ page }) => {
     )
     .toBeGreaterThan(0);
 });
+
+test('the kitty yarn ball is omitted below desktop width', async ({ page }) => {
+  // Force kitty via the URL param (it wins over the galaxy pinned in
+  // beforeEach). A phone viewport is well below the desktop cutoff.
+  await page.goto('/?theme=kitty');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'kitty');
+
+  // Drive a touch-drag — on desktop this would paint the yarn ball on the
+  // cursor canvas; below the cutoff it must paint nothing (the cat just hammers
+  // the tap point, no ball).
+  await page.evaluate(async () => {
+    const fire = (type: string, x: number, y: number) =>
+      window.dispatchEvent(
+        new PointerEvent(type, { clientX: x, clientY: y, pointerType: 'touch', bubbles: true }),
+      );
+    fire('pointerdown', 40, 300);
+    for (let i = 0; i < 12; i++) fire('pointermove', 40 + i * 10, 300);
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  });
+
+  const painted = await page.evaluate(() => {
+    const c = document.querySelector('canvas.z-50');
+    if (!(c instanceof HTMLCanvasElement)) return -1;
+    const ctx = c.getContext('2d');
+    if (!ctx) return -1;
+    const d = ctx.getImageData(0, 0, c.width, c.height).data;
+    let n = 0;
+    for (let i = 3; i < d.length; i += 4) if (d[i] !== 0) n++;
+    return n;
+  });
+  expect(painted, 'no yarn ball should be drawn below desktop width').toBe(0);
+});

@@ -17,6 +17,15 @@ import { advanceYarn, createYarn, followPointer, smackYarn, type YarnBall } from
 import { kittyLink } from './kittyLink';
 import { drawYarn } from '../backgrounds/kittySprites';
 
+/**
+ * Below this viewport width the kitty theme drops the yarn-ball cursor entirely:
+ * a touch screen has no resting hover pointer to anchor it under, so rather than
+ * a ball that only flickers into view while a finger is down, there's none — the
+ * cat simply hammers wherever you tap. The cat's own size/speed scaling lives in
+ * catSprite's `viewScale`; this is just the cursor cutoff.
+ */
+const YARN_DESKTOP_MIN_WIDTH = 1024;
+
 /** How fast the comet head eases toward the real pointer (fraction per frame). */
 const COMET_EASE = 0.28;
 /** Comet sparks emitted per frame while the cursor is live. */
@@ -133,6 +142,14 @@ function CursorCanvas() {
     const list = particlesRef.current;
 
     if (themeRef.current === 'kitty') {
+      // Below desktop width there's no yarn ball at all — clear the shared
+      // position so the cat aims at the real tap point, not a stale ball, and
+      // drop any ball built on a wider layout before a resize.
+      if (width < YARN_DESKTOP_MIN_WIDTH) {
+        yarnRef.current = null;
+        kittyLink.yarn = null;
+        return;
+      }
       // Yarn ball: tracks the pointer at rest, flies + ricochets after a smack.
       ctx.globalCompositeOperation = 'source-over';
       const yarn = yarnRef.current ?? (yarnRef.current = createYarn(target.x, target.y));

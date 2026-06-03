@@ -10,6 +10,7 @@ import {
   SMACK_SPEED,
   HIT_TIME,
   HIT_IMPACT_TIME,
+  viewScale,
 } from './catSprite';
 
 const W = 800;
@@ -28,6 +29,57 @@ describe('pickRoamTarget', () => {
     expect(top.y).toBeCloseTo(H * 0.32); // never up at the very top
     const bottom = pickRoamTarget(W, H, () => 1);
     expect(bottom.y).toBeLessThanOrEqual(H - ROAM_MARGIN + 0.001);
+  });
+});
+
+describe('viewScale', () => {
+  it('is 1 on a laptop-class screen and shrinks toward a floor on a phone', () => {
+    expect(viewScale(1280, 800)).toBe(1); // roomy desktop
+    expect(viewScale(720, 1280)).toBe(1); // exactly the reference min side
+    expect(viewScale(390, 844)).toBeCloseTo(0.5417); // portrait phone → 390/720
+    expect(viewScale(300, 844)).toBe(0.5); // very narrow → clamped to the floor
+    expect(viewScale(540, 1200)).toBeCloseTo(0.75); // 540/720, between floor and 1
+  });
+
+  it('scales off the smaller side, so a short landscape phone shrinks too', () => {
+    expect(viewScale(844, 390)).toBeCloseTo(0.5417); // landscape phone — height is the tight side
+    expect(viewScale(600, 1000)).toBe(viewScale(1000, 600)); // orientation-agnostic
+  });
+});
+
+describe('advanceCat — viewport scale', () => {
+  it('slows roaming proportionally on a smaller viewport', () => {
+    const mk = () => {
+      const cat = createCat(W, H, () => 0.5);
+      cat.x = 100;
+      cat.y = 300;
+      cat.targetX = 700; // far enough that a step never reaches it
+      cat.targetY = 300;
+      cat.wait = 0;
+      return cat;
+    };
+    const full = mk();
+    advanceCat(full, 0.1, W, H, { rand: () => 0.5, scale: 1 });
+    const half = mk();
+    advanceCat(half, 0.1, W, H, { rand: () => 0.5, scale: 0.5 });
+    expect(half.x - 100).toBeCloseTo((full.x - 100) * 0.5);
+  });
+
+  it('scales the smack launch velocity with the cat size', () => {
+    const cat = createCat(W, H, () => 0.5);
+    cat.x = 100;
+    cat.y = 300;
+    cat.state = 'pounce';
+    cat.stateTime = 0;
+    cat.targetX = 125; // a short hop landing dead-on the yarn
+    cat.targetY = 300;
+    cat.aimX = 125;
+    cat.aimY = 300;
+    advanceCat(cat, 0.05, W, H, { scale: 0.5 }); // 31px step closes the 25px gap → catch
+    expect(cat.state).toBe('hit');
+    advanceCat(cat, HIT_IMPACT_TIME - 0.06, W, H, { scale: 0.5 });
+    const hit = advanceCat(cat, 0.06, W, H, { scale: 0.5 }); // frame the mallet connects
+    expect(hit.smack!.vx).toBeCloseTo(SMACK_SPEED * 0.5); // launch halved with the cat
   });
 });
 
@@ -270,5 +322,23 @@ describe('advanceCat — pounce lifecycle', () => {
     cat.stateTime = 0;
     advanceCat(cat, RECOVER_TIME + 0.01, W, H, { rand: () => 0.5 });
     expect(cat.state).toBe('roam');
+  });
+
+  it('resumes moving immediately after recovering — no idle dawdle', () => {
+    const cat = createCat(W, H, () => 0.5);
+    cat.state = 'recover';
+    cat.stateTime = 0;
+    // Sit the cat far from the spot rand=0.5 picks (≈400,368) so it has
+    // somewhere to walk to.
+    cat.x = 100;
+    cat.y = 100;
+    // Finish the recover beat: it enters roam with no wait queued...
+    advanceCat(cat, RECOVER_TIME + 0.01, W, H, { rand: () => 0.5 });
+    expect(cat.state).toBe('roam');
+    expect(cat.wait).toBe(0);
+    // ...so the very next frame it's already padding toward its next spot.
+    const before = { x: cat.x, y: cat.y };
+    advanceCat(cat, 0.05, W, H, { rand: () => 0.5 });
+    expect(Math.hypot(cat.x - before.x, cat.y - before.y)).toBeGreaterThan(0);
   });
 });

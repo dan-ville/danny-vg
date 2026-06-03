@@ -4,9 +4,9 @@ import { useResizableCanvas } from '../hooks/useResizableCanvas';
 import { useReducedMotion } from '../context/MotionContext';
 import { isBackgroundTap } from '../effects/backgroundTap';
 import { kittyLink } from '../effects/kittyLink';
-import { advanceCat, createCat, startPounce, type Cat, type CatState } from './catSprite';
+import { advanceCat, createCat, startPounce, viewScale, type Cat, type CatState } from './catSprite';
 import { drawImpact, IMPACT_LIFE } from './kittySprites';
-import { drawCatSheet, loadCatSheets, HAMMER_REACH, type CatSheets } from './catSheet';
+import { drawCatSheet, loadCatSheets, hammerReach, BASE_SCALE, type CatSheets } from './catSheet';
 
 /** A live dust burst spawned at a take-off / landing point, aged each frame. */
 interface Impact {
@@ -78,6 +78,13 @@ export function KittyBackground() {
     ctx.clearRect(0, 0, width, height);
     if (!cat) return;
 
+    // Shrink the cat + slow its motion on a narrow viewport so it doesn't
+    // dominate a phone screen or rocket across it. The draw scale folds in the
+    // art's base scale; the physics scale is the bare viewport factor.
+    const scale = viewScale(width, height);
+    const catScale = BASE_SCALE * scale;
+    const reach = hammerReach(catScale);
+
     // While winding up / leaping, feed the yarn's live position as the cat's
     // *aim* — the crouch tracks it and each landing re-hops toward it, but a hop
     // already in flight travels its fixed line (no mid-air homing).
@@ -88,7 +95,8 @@ export function KittyBackground() {
 
     const { smack, impacts } = advanceCat(cat, dt, width, height, {
       roam: !reducedRef.current,
-      hammerReach: HAMMER_REACH,
+      hammerReach: reach,
+      scale,
     });
 
     // Pin the yarn under the raised mallet for the whole `hit` swing so a moving
@@ -106,11 +114,11 @@ export function KittyBackground() {
       // hammer head lands (beside the cat) rather than under its feet.
       kittyLink.pin = null;
       if (kittyLink.smack) kittyLink.smack(smack.vx, smack.vy);
-      const hx = cat.x + cat.facing * HAMMER_REACH.x;
-      const hy = cat.y + HAMMER_REACH.y;
+      const hx = cat.x + cat.facing * reach.x;
+      const hy = cat.y + reach.y;
       impactsRef.current.push({ x: hx, y: hy, t: 0 });
     } else {
-      for (const im of impacts) impactsRef.current.push({ x: im.x, y: im.y + FOOT_OFFSET, t: 0 });
+      for (const im of impacts) impactsRef.current.push({ x: im.x, y: im.y + FOOT_OFFSET * scale, t: 0 });
     }
 
     // Age + draw the dust bursts on the ground, beneath the cat.
@@ -123,7 +131,7 @@ export function KittyBackground() {
     }
     impactsRef.current = live;
 
-    drawCatSheet(ctx, cat, sheetsRef.current);
+    drawCatSheet(ctx, cat, sheetsRef.current, catScale);
   });
 
   return <canvas ref={canvasRef} aria-hidden="true" className="kitty-bg fixed inset-0 -z-10" />;
