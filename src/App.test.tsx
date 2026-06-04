@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import App from './App';
 import { ThemeProvider } from './context/ThemeContext';
@@ -47,6 +48,29 @@ describe('App', () => {
   it('renders the theme orb switcher', () => {
     renderApp();
     expect(screen.getByRole('button', { name: /switch theme/i })).toBeInTheDocument();
+  });
+
+  it('conceals the chrome when the visibility toggle is pressed', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    const nav = screen.getByRole('navigation');
+    const header = screen.getByRole('heading', { name: 'Danny VG' }).closest('header')!;
+    // Visible to start: nothing concealed, no aria-hidden.
+    expect(nav.className).not.toContain('concealable--off');
+    expect(nav).not.toHaveAttribute('aria-hidden');
+
+    await user.click(screen.getByRole('button', { name: /hide page content/i }));
+
+    // Links + profile header fade out; the theme orb stays reachable.
+    expect(nav.className).toContain('concealable--off');
+    expect(nav).toHaveAttribute('aria-hidden', 'true');
+    expect(header.className).toContain('concealable--off');
+    expect(screen.getByRole('button', { name: /switch theme/i })).toBeInTheDocument();
+
+    // Toggling back reveals everything again.
+    await user.click(screen.getByRole('button', { name: /show page content/i }));
+    expect(nav.className).not.toContain('concealable--off');
+    expect(nav).not.toHaveAttribute('aria-hidden');
   });
 
   // The theme provider writes ?theme= to the URL; reset both so a leaked param
