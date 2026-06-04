@@ -10,9 +10,10 @@ import { ThemeCursor } from './effects/ThemeCursor';
 import { links } from './data/links';
 
 export default function App() {
-  // Mobile immersive mode: hide the profile, links, and motion toggle so the
-  // visitor can play with the live theme unobstructed. Desktop ignores this —
-  // every concealable element re-asserts visibility at `lg:`.
+  // Mobile immersive mode: hide every control (profile, links, motion toggle,
+  // theme orb) but the visibility toggle itself, so the visitor gets an
+  // unobstructed view of the live theme. Desktop ignores this — every
+  // concealable element re-asserts visibility at `lg:`.
   const [hidden, setHidden] = useState(false);
 
   return (
@@ -30,10 +31,11 @@ export default function App() {
           ))}
         </nav>
       </main>
-      {/* Corner controls in keyboard tab order: motion → visibility → orb. */}
+      {/* Corner controls in keyboard tab order: motion → visibility → orb.
+          The visibility toggle is the one control immersive mode keeps. */}
       <MotionToggle hidden={hidden} />
       <VisibilityToggle hidden={hidden} onToggle={() => setHidden((h) => !h)} />
-      <ThemeOrb />
+      <ThemeOrb hidden={hidden} />
       <ThemeCursor />
     </>
   );

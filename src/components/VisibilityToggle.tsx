@@ -8,10 +8,11 @@ export interface VisibilityToggleProps {
 
 /**
  * Mobile-only immersive switch: a fixed bottom-right disc, the frosted sibling
- * of the bottom-left MotionToggle. Tapping it hides everything but the theme orb
- * so the visitor can play with the live background unobstructed; tapping again
- * brings the page back. Hidden entirely at `lg:` — desktop has the room to keep
- * the links visible and reserves the bottom-right corner for the theme orb.
+ * of the bottom-left MotionToggle. Tapping it hides every other control (profile,
+ * links, motion toggle, theme orb) for an unobstructed view of the live theme;
+ * it alone stays, as the only way back. Tapping again brings the page back.
+ * Hidden entirely at `lg:` — desktop has the room to keep the links visible and
+ * reserves the bottom-right corner for the theme orb.
  */
 export function VisibilityToggle({ hidden, onToggle }: VisibilityToggleProps) {
   return (

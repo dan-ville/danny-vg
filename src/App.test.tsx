@@ -55,22 +55,26 @@ describe('App', () => {
     renderApp();
     const nav = screen.getByRole('navigation');
     const header = screen.getByRole('heading', { name: 'Danny VG' }).closest('header')!;
+    const orb = screen.getByRole('button', { name: /switch theme/i });
     // Visible to start: nothing concealed, no aria-hidden.
     expect(nav.className).not.toContain('concealable--off');
     expect(nav).not.toHaveAttribute('aria-hidden');
 
     await user.click(screen.getByRole('button', { name: /hide page content/i }));
 
-    // Links + profile header fade out; the theme orb stays reachable.
+    // Links, profile header, and the theme orb all fade out; only the
+    // visibility toggle remains to bring them back.
     expect(nav.className).toContain('concealable--off');
     expect(nav).toHaveAttribute('aria-hidden', 'true');
     expect(header.className).toContain('concealable--off');
-    expect(screen.getByRole('button', { name: /switch theme/i })).toBeInTheDocument();
+    expect(orb.className).toContain('concealable--off');
+    expect(screen.getByRole('button', { name: /show page content/i })).toBeInTheDocument();
 
     // Toggling back reveals everything again.
     await user.click(screen.getByRole('button', { name: /show page content/i }));
     expect(nav.className).not.toContain('concealable--off');
     expect(nav).not.toHaveAttribute('aria-hidden');
+    expect(orb.className).not.toContain('concealable--off');
   });
 
   // The theme provider writes ?theme= to the URL; reset both so a leaked param

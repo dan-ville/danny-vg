@@ -100,7 +100,7 @@ test('the custom cursor follows touch input', async ({ page }) => {
     .toBeGreaterThan(0);
 });
 
-test('the immersive toggle hides the links and profile but keeps the theme orb', async ({
+test('the immersive toggle hides all chrome but the visibility toggle itself', async ({
   page,
 }) => {
   const links = page.getByRole('navigation');
@@ -108,17 +108,21 @@ test('the immersive toggle hides the links and profile but keeps the theme orb',
   const orb = page.getByRole('button', { name: /switch theme/i });
   await expect(links).toBeVisible();
   await expect(profile).toBeVisible();
+  await expect(orb).toBeVisible();
 
-  // Hide everything but the chrome you need to keep playing with the theme.
+  // Hide everything for an unobstructed view of the bare theme.
   await page.getByRole('button', { name: /hide page content/i }).click();
   await expect(links).toBeHidden();
   await expect(profile).toBeHidden();
-  await expect(orb).toBeVisible();
+  await expect(orb).toBeHidden();
+  // The toggle stays — it's the only way back.
+  await expect(page.getByRole('button', { name: /show page content/i })).toBeVisible();
 
   // Toggle back — content returns.
   await page.getByRole('button', { name: /show page content/i }).click();
   await expect(links).toBeVisible();
   await expect(profile).toBeVisible();
+  await expect(orb).toBeVisible();
 });
 
 test('the kitty yarn ball is omitted below desktop width', async ({ page }) => {
