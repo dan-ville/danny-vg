@@ -11,7 +11,16 @@ import { useTheme } from '../context/ThemeContext';
  * keyboard-accessible. The bottom-left motion toggle, the cursor-picker sibling,
  * and safe-area-inset padding arrive in M4.
  */
-export function ThemeOrb() {
+export interface ThemeOrbProps {
+  /**
+   * Mobile immersive mode: when true the orb fades out + ignores pointers with
+   * the rest of the chrome, leaving the bare theme and the visibility toggle.
+   * Always overridden visible at `lg:`.
+   */
+  hidden?: boolean;
+}
+
+export function ThemeOrb({ hidden = false }: ThemeOrbProps) {
   const { theme, cycleTheme } = useTheme();
   const [pulsing, setPulsing] = useState(false);
 
@@ -26,9 +35,14 @@ export function ThemeOrb() {
       // so this reliably clears the pulse so it can re-trigger on the next click.
       onAnimationEnd={() => setPulsing(false)}
       aria-label={`Switch theme — current: ${theme}`}
-      className={`theme-orb fixed bottom-6 right-6 z-20 h-12 w-12 rounded-full${
+      aria-hidden={hidden || undefined}
+      tabIndex={hidden ? -1 : undefined}
+      // Desktop home is bottom-right (these base classes); below the 1024px
+      // cutoff it's relocated to the top-right corner in index.css, clearing the
+      // bottom-right visibility toggle.
+      className={`theme-orb concealable fixed bottom-6 right-6 z-20 h-12 w-12 rounded-full${
         pulsing ? ' theme-orb--pulse' : ''
-      }`}
+      }${hidden ? ' concealable--off' : ''}`}
     />
   );
 }

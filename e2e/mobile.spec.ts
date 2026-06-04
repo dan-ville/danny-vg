@@ -46,11 +46,13 @@ test('a finger-drag does not scroll the page', async ({ page }) => {
   const vp = page.viewportSize();
   if (!vp) throw new Error('expected a mobile viewport');
 
-  // A real touch swipe up the middle of the screen — the gesture that used to
-  // scroll/bounce the page.
-  await page.touchscreen.tap(vp.width / 2, vp.height / 2);
+  // A real touch swipe up the lower-third of the screen — the gesture that used
+  // to scroll/bounce the page. We aim below the centered links (and above the
+  // bottom corner controls) so the swipe lands on bare background, not a link.
+  const startY = vp.height * 0.8;
+  await page.touchscreen.tap(vp.width / 2, startY);
   for (let i = 0; i < 3; i++) {
-    await page.touchscreen.tap(vp.width / 2, vp.height / 2 - i * 40);
+    await page.touchscreen.tap(vp.width / 2, startY - i * 40);
   }
 
   const scrolled = await page.evaluate(() => ({
@@ -96,6 +98,31 @@ test('the custom cursor follows touch input', async ({ page }) => {
       { message: 'cursor canvas should paint a trail in response to touch' },
     )
     .toBeGreaterThan(0);
+});
+
+test('the immersive toggle hides all chrome but the visibility toggle itself', async ({
+  page,
+}) => {
+  const links = page.getByRole('navigation');
+  const profile = page.getByRole('heading', { name: 'Danny VG' });
+  const orb = page.getByRole('button', { name: /switch theme/i });
+  await expect(links).toBeVisible();
+  await expect(profile).toBeVisible();
+  await expect(orb).toBeVisible();
+
+  // Hide everything for an unobstructed view of the bare theme.
+  await page.getByRole('button', { name: /hide page content/i }).click();
+  await expect(links).toBeHidden();
+  await expect(profile).toBeHidden();
+  await expect(orb).toBeHidden();
+  // The toggle stays — it's the only way back.
+  await expect(page.getByRole('button', { name: /show page content/i })).toBeVisible();
+
+  // Toggle back — content returns.
+  await page.getByRole('button', { name: /show page content/i }).click();
+  await expect(links).toBeVisible();
+  await expect(profile).toBeVisible();
+  await expect(orb).toBeVisible();
 });
 
 test('the kitty yarn ball is omitted below desktop width', async ({ page }) => {
