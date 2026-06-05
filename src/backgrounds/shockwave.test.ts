@@ -6,6 +6,8 @@ import {
   RING_SPEED,
   BAND_HALF_WIDTH,
   MIN_STRENGTH,
+  ringEffect,
+  combineRings,
 } from './shockwave';
 
 describe('createRing', () => {
@@ -61,5 +63,56 @@ describe('isRingDone', () => {
     expect(isRingDone(ring, 1000)).toBe(false);
     ring.radius = 1000 + BAND_HALF_WIDTH + 1;
     expect(isRingDone(ring, 1000)).toBe(true);
+  });
+});
+
+/** A ring centred at the origin with a wavefront at radius 100. */
+const ringAt100 = () => ({ x: 0, y: 0, radius: 100, speed: RING_SPEED, strength: 1 });
+
+describe('ringEffect', () => {
+  it('leaves a point well outside the band untouched', () => {
+    // dist 300 vs radius 100 -> s = 200 >> BAND_HALF_WIDTH.
+    const e = ringEffect(ringAt100(), 300, 0);
+    expect(e).toEqual({ dx: 0, dy: 0, decode: 0 });
+  });
+
+  it('shoves outward ahead of the wavefront', () => {
+    // Point on +x at dist 130 (s = +30, inside the band): pushed further out (+x).
+    const e = ringEffect(ringAt100(), 130, 0);
+    expect(e.dx).toBeGreaterThan(0);
+  });
+
+  it('pulls back behind the wavefront', () => {
+    // Point on +x at dist 70 (s = -30, inside the band): returns inward (-x).
+    const e = ringEffect(ringAt100(), 70, 0);
+    expect(e.dx).toBeLessThan(0);
+  });
+
+  it('peaks decode at the wavefront and fades to the band edges', () => {
+    const atCrest = ringEffect(ringAt100(), 100, 0).decode; // s = 0
+    const nearEdge = ringEffect(ringAt100(), 100 + (BAND_HALF_WIDTH - 1), 0).decode;
+    expect(atCrest).toBeGreaterThan(nearEdge);
+    expect(atCrest).toBeGreaterThan(0);
+    expect(nearEdge).toBeGreaterThanOrEqual(0);
+  });
+
+  it('never produces NaN for a point exactly on the centre', () => {
+    const e = ringEffect(ringAt100(), 0, 0);
+    expect(Number.isFinite(e.dx)).toBe(true);
+    expect(Number.isFinite(e.dy)).toBe(true);
+    expect(Number.isFinite(e.decode)).toBe(true);
+  });
+});
+
+describe('combineRings', () => {
+  it('sums the shoves and takes the max decode across rings', () => {
+    const one = ringEffect(ringAt100(), 130, 0);
+    const both = combineRings([ringAt100(), ringAt100()], 130, 0);
+    expect(both.dx).toBeCloseTo(one.dx * 2);
+    expect(both.decode).toBeCloseTo(one.decode); // max of two equal values
+  });
+
+  it('is inert with no rings', () => {
+    expect(combineRings([], 130, 0)).toEqual({ dx: 0, dy: 0, decode: 0 });
   });
 });

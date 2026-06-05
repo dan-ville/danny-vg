@@ -87,3 +87,46 @@ export function advanceRing(ring: Ring, dt: number): void {
 export function isRingDone(ring: Ring, reach: number): boolean {
   return ring.radius - BAND_HALF_WIDTH > reach;
 }
+
+/**
+ * One ring's effect on the glyph at (x, y). Within the band (|dist - radius| <
+ * BAND_HALF_WIDTH) the glyph is shoved radially by a pond-ripple profile —
+ * outward ahead of the wavefront (s > 0), back inward behind it (s < 0), zero at
+ * the crest and outside the band — with magnitude scaling from SHOVE_BASE to
+ * SHOVE_MAX by strength. `decode` peaks at the crest and fades to the band edges.
+ * Returns all-zero outside the band or at the exact centre.
+ */
+export function ringEffect(ring: Ring, x: number, y: number): ShoveEffect {
+  const dx0 = x - ring.x;
+  const dy0 = y - ring.y;
+  const dist = Math.hypot(dx0, dy0);
+  const s = dist - ring.radius; // signed distance from the wavefront
+  if (dist < 1e-6 || Math.abs(s) >= BAND_HALF_WIDTH) return { dx: 0, dy: 0, decode: 0 };
+
+  const peak = SHOVE_BASE + ring.strength * (SHOVE_MAX - SHOVE_BASE);
+  const sigma = BAND_HALF_WIDTH / 2;
+  // Odd ripple: + outward for s>0, - inward for s<0, ~0 at the crest and edges.
+  const ripple = (s / BAND_HALF_WIDTH) * Math.exp(-(s * s) / (2 * sigma * sigma)) * SHAPE_NORM;
+  const mag = peak * ripple;
+  const ux = dx0 / dist;
+  const uy = dy0 / dist;
+
+  const w = 1 - (s / BAND_HALF_WIDTH) ** 2; // 1 at the crest, 0 at the band edges
+  const decode = Math.max(0, w) * ring.strength;
+
+  return { dx: ux * mag, dy: uy * mag, decode };
+}
+
+/** Combine every active ring at (x, y): sum the shoves, take the max decode. */
+export function combineRings(rings: Ring[], x: number, y: number): ShoveEffect {
+  let dx = 0;
+  let dy = 0;
+  let decode = 0;
+  for (const ring of rings) {
+    const e = ringEffect(ring, x, y);
+    dx += e.dx;
+    dy += e.dy;
+    if (e.decode > decode) decode = e.decode;
+  }
+  return { dx, dy, decode };
+}
