@@ -11,6 +11,7 @@ import {
   chargePull,
   CHARGE_FULL,
   CHARGE_PULL_RADIUS,
+  CHARGE_PULL_MAX,
 } from './shockwave';
 
 describe('createRing', () => {
@@ -147,5 +148,17 @@ describe('chargePull', () => {
   it('does not reach beyond CHARGE_PULL_RADIUS', () => {
     const e = chargePull({ x: 0, y: 0, t: CHARGE_FULL }, CHARGE_PULL_RADIUS + 10, 0);
     expect(e).toEqual({ dx: 0, dy: 0, glow: 0 });
+  });
+
+  it('reaches CHARGE_PULL_MAX·(distance falloff) at full charge', () => {
+    // Full charge, halfway to the radius -> falloff 0.5 -> 9px inward.
+    const e = chargePull({ x: 0, y: 0, t: CHARGE_FULL }, CHARGE_PULL_RADIUS / 2, 0);
+    expect(e.dx).toBeCloseTo(-CHARGE_PULL_MAX * 0.5);
+  });
+
+  it('scales glow by the distance falloff at full charge', () => {
+    // Full charge, halfway to the radius -> glow 0.5.
+    const e = chargePull({ x: 0, y: 0, t: CHARGE_FULL }, CHARGE_PULL_RADIUS / 2, 0);
+    expect(e.glow).toBeCloseTo(0.5);
   });
 });

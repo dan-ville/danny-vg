@@ -8,7 +8,7 @@
  * loop. This replaces the old vortex twist as matrix's signature interaction.
  *
  * Positions are CSS px. A ring's `radius` grows at RING_SPEED; its active "band"
- * is the annulus within BAND_THICKNESS of that radius. `strength` (0..1) comes
+ * is the annulus within BAND_HALF_WIDTH of that radius. `strength` (0..1) comes
  * from how long the press was charged and scales both the shove and the decode.
  */
 
