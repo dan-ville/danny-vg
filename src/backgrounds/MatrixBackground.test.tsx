@@ -23,14 +23,14 @@ describe('MatrixBackground', () => {
   });
 
   it('wires up background pointer interaction without throwing', () => {
-    // The vortex twist listens on window; a full press/drag/release cycle must
-    // run cleanly. (The warp math itself is covered in vortexTwist.test.ts.)
-    // jsdom has no PointerEvent; a plain Event drives the same window listeners
-    // (target is window, which isBackgroundTap treats as empty background).
+    // The shockwave listens on window: pressing charges, releasing fires a ring.
+    // A full press/release cycle must run cleanly. (The shove/decode math itself
+    // is covered in shockwave.test.ts.) jsdom has no PointerEvent; a plain Event
+    // drives the same window listeners (target is window, which isBackgroundTap
+    // treats as empty background).
     render(<MatrixBackground />);
     expect(() => {
       window.dispatchEvent(new Event('pointerdown'));
-      window.dispatchEvent(new Event('pointermove'));
       window.dispatchEvent(new Event('pointerup'));
     }).not.toThrow();
   });
