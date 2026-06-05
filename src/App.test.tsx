@@ -56,7 +56,7 @@ describe('App', () => {
     expect(container.querySelector('canvas.pointer-events-none')).toBeNull();
   });
 
-  it('mounts the smoke effect layer at z-0 on rainbow (matrix has its own vortex)', () => {
+  it('mounts the smoke effect layer at z-0 on rainbow (matrix has its own shockwave)', () => {
     localStorage.setItem(THEME_STORAGE_KEY, 'rainbow');
     const { container } = renderApp();
     const ripple = container.querySelector('canvas.pointer-events-none');

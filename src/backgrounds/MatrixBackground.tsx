@@ -85,8 +85,8 @@ export function MatrixBackground() {
     const onRelease = () => {
       const sw = shockwaveRef.current;
       if (!sw.charge) return;
-      const charge = Math.min(1, sw.charge.t / CHARGE_FULL);
-      sw.rings.push(createRing(sw.charge.x, sw.charge.y, charge));
+      // createRing clamps charge to 0..1, so hand it the raw progress ratio.
+      sw.rings.push(createRing(sw.charge.x, sw.charge.y, sw.charge.t / CHARGE_FULL));
       if (sw.rings.length > MAX_RINGS) sw.rings.shift();
       sw.charge = null;
     };

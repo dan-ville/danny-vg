@@ -33,7 +33,7 @@ describe('EffectStage', () => {
     expect(container.querySelector('canvas')).toBeNull();
   });
 
-  it('renders no overlay on matrix — the vortex twist is the matrix effect', () => {
+  it('renders no overlay on matrix — the shockwave-decode is the matrix effect', () => {
     localStorage.setItem(THEME_STORAGE_KEY, 'matrix');
     const { container } = renderStage();
     expect(container.querySelector('canvas')).toBeNull();

@@ -8,8 +8,8 @@ import { SmokeCanvas } from './SmokeCanvas';
  *
  * - **galaxy** → no layer here; its tap interaction is the gravity well, which
  *   lives inside `GalaxyBackground` because it has to bend the real star field.
- * - **matrix** → no layer here either; its tap interaction is the vortex twist,
- *   which lives inside `MatrixBackground` because it has to warp the real rain.
+ * - **matrix** → no layer here either; its tap interaction is the shockwave-decode,
+ *   which lives inside `MatrixBackground` because it displaces the real rain glyphs.
  * - **rainbow** → the colored smoke-bomb plume (`SmokeCanvas`), an overlay
  *   canvas over the CSS gradient.
  *
