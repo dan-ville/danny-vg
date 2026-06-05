@@ -18,6 +18,7 @@ import {
   isRingDone,
   CHARGE_FULL,
   MAX_RINGS,
+  RECOIL_TIME,
   type Charge,
   type Ring,
 } from './shockwave';
@@ -74,27 +75,40 @@ export function MatrixBackground() {
     sceneRef.current = { width, height, rowCount, cols, grid };
   });
 
-  // Pressing the empty background starts a charge; holding builds it; releasing
-  // fires a ring whose strength scales with how long it charged. Taps that start
-  // on cards/controls are ignored.
+  // Pressing the empty background starts a charge that gathers the rain into a
+  // knot the longer it's held; releasing fires a ring (push) and kicks the knot
+  // into its outward recoil fling. Taps that start on cards/controls are ignored.
   useEffect(() => {
     const onPointerDown = (event: PointerEvent) => {
       if (!isBackgroundTap(event.target)) return;
-      shockwaveRef.current.charge = { x: event.clientX, y: event.clientY, t: 0 };
+      shockwaveRef.current.charge = { x: event.clientX, y: event.clientY, t: 0, held: true, release: 0 };
+    };
+    // Drag the suction with the pointer while held, so the knot follows the
+    // cursor and keeps grabbing fresh rain along the way.
+    const onPointerMove = (event: PointerEvent) => {
+      const charge = shockwaveRef.current.charge;
+      if (!charge || !charge.held) return;
+      charge.x = event.clientX;
+      charge.y = event.clientY;
     };
     const onRelease = () => {
       const sw = shockwaveRef.current;
-      if (!sw.charge) return;
+      // Only a still-held charge fires; ignore a release once the recoil is running.
+      if (!sw.charge || !sw.charge.held) return;
       // createRing clamps charge to 0..1, so hand it the raw progress ratio.
       sw.rings.push(createRing(sw.charge.x, sw.charge.y, sw.charge.t / CHARGE_FULL));
       if (sw.rings.length > MAX_RINGS) sw.rings.shift();
-      sw.charge = null;
+      // Keep the charge alive to play out the recoil fling; the loop drops it.
+      sw.charge.held = false;
+      sw.charge.release = 0;
     };
     window.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onRelease);
     window.addEventListener('pointercancel', onRelease);
     return () => {
       window.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onRelease);
       window.removeEventListener('pointercancel', onRelease);
     };
@@ -106,9 +120,17 @@ export function MatrixBackground() {
     const { width, height, rowCount, cols, grid } = sceneRef.current;
     const sw = shockwaveRef.current;
 
-    // Advance the charge clock (if held) and every live ring; retire rings whose
-    // band has fully crossed the far corner of the viewport.
-    if (sw.charge) sw.charge.t += dt;
+    // Advance the charge: build the gather while held, otherwise run the recoil
+    // clock and drop the charge once the fling has fully unwound.
+    if (sw.charge) {
+      if (sw.charge.held) {
+        sw.charge.t += dt;
+      } else {
+        sw.charge.release += dt;
+        if (sw.charge.release >= RECOIL_TIME) sw.charge = null;
+      }
+    }
+    // Retire rings whose band has fully crossed the far corner of the viewport.
     const reach = Math.hypot(width, height);
     for (const ring of sw.rings) advanceRing(ring, dt);
     sw.rings = sw.rings.filter((ring) => !isRingDone(ring, reach));
@@ -165,11 +187,13 @@ export function MatrixBackground() {
         if (ti === 0) {
           ctx.fillStyle = 'rgba(225,255,235,0.95)'; // bright white-green head
         } else {
-          // Blend the green trail toward white by brightness; boost alpha so a
-          // dim trail glyph still flashes when the wavefront hits it.
-          const r = Math.round(59 + bright * (255 - 59));
-          const b = Math.round(122 + bright * (255 - 122));
-          const a = Math.min(1, intensity + bright * 0.7);
+          // Blend the green trail toward white, ramped so even a quick tap's
+          // brightness clearly flashes (not a faint tint); boost alpha hard so a
+          // dim trail glyph still lights up when the wavefront hits it.
+          const flash = Math.min(1, bright * 1.6);
+          const r = Math.round(59 + flash * (255 - 59));
+          const b = Math.round(122 + flash * (255 - 122));
+          const a = Math.min(1, intensity + flash * 0.85);
           ctx.fillStyle = `rgba(${r},255,${b},${a})`;
         }
         ctx.fillText(grid[c][row] ?? randomGlyph(), px + dx, py + dy);

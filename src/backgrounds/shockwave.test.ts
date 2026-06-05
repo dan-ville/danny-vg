@@ -11,7 +11,8 @@ import {
   chargePull,
   CHARGE_FULL,
   CHARGE_PULL_RADIUS,
-  CHARGE_PULL_MAX,
+  CHARGE_PULL_FRAC,
+  RECOIL_TIME,
 } from './shockwave';
 
 describe('createRing', () => {
@@ -128,37 +129,57 @@ describe('combineRings', () => {
   });
 });
 
+/** A charge still being held at the given charge time, anchored at the origin. */
+const heldCharge = (t: number) => ({ x: 0, y: 0, t, held: true, release: 0 });
+
 describe('chargePull', () => {
-  it('bends a nearby glyph inward toward the charge centre', () => {
+  it('gathers a nearby glyph inward toward the charge centre while held', () => {
     // Charge at origin, point on +x: displacement should be toward the centre (-x).
-    const e = chargePull({ x: 0, y: 0, t: CHARGE_FULL }, 50, 0);
+    const e = chargePull(heldCharge(CHARGE_FULL), 50, 0);
     expect(e.dx).toBeLessThan(0);
   });
 
   it('brightens more the longer the press is charged', () => {
-    const half = chargePull({ x: 0, y: 0, t: CHARGE_FULL / 2 }, 50, 0).glow;
-    const full = chargePull({ x: 0, y: 0, t: CHARGE_FULL }, 50, 0).glow;
+    const half = chargePull(heldCharge(CHARGE_FULL / 2), 50, 0).glow;
+    const full = chargePull(heldCharge(CHARGE_FULL), 50, 0).glow;
     expect(full).toBeGreaterThan(half);
   });
 
   it('does nothing at the instant of the press (t = 0)', () => {
-    expect(chargePull({ x: 0, y: 0, t: 0 }, 50, 0)).toEqual({ dx: 0, dy: 0, glow: 0 });
+    expect(chargePull(heldCharge(0), 50, 0)).toEqual({ dx: 0, dy: 0, glow: 0 });
   });
 
   it('does not reach beyond CHARGE_PULL_RADIUS', () => {
-    const e = chargePull({ x: 0, y: 0, t: CHARGE_FULL }, CHARGE_PULL_RADIUS + 10, 0);
+    const e = chargePull(heldCharge(CHARGE_FULL), CHARGE_PULL_RADIUS + 10, 0);
     expect(e).toEqual({ dx: 0, dy: 0, glow: 0 });
   });
 
-  it('reaches CHARGE_PULL_MAX·(distance falloff) at full charge', () => {
-    // Full charge, halfway to the radius -> falloff 0.5 -> 9px inward.
-    const e = chargePull({ x: 0, y: 0, t: CHARGE_FULL }, CHARGE_PULL_RADIUS / 2, 0);
-    expect(e.dx).toBeCloseTo(-CHARGE_PULL_MAX * 0.5);
+  it('yanks a glyph in the core nearly all the way to the cursor at full charge', () => {
+    // 50px is well inside the flat core (0.6·300 = 180), so window = 1 and the
+    // pull is the full fraction of the offset.
+    const e = chargePull(heldCharge(CHARGE_FULL), 50, 0);
+    expect(e.dx).toBeCloseTo(-50 * CHARGE_PULL_FRAC);
   });
 
-  it('scales glow by the distance falloff at full charge', () => {
-    // Full charge, halfway to the radius -> glow 0.5.
-    const e = chargePull({ x: 0, y: 0, t: CHARGE_FULL }, CHARGE_PULL_RADIUS / 2, 0);
-    expect(e.glow).toBeCloseTo(0.5);
+  it('keeps the pull strong across the core, then eases off toward the rim', () => {
+    const core = chargePull(heldCharge(CHARGE_FULL), 50, 0).glow; // inside flat core
+    const rim = chargePull(heldCharge(CHARGE_FULL), CHARGE_PULL_RADIUS * 0.95, 0).glow;
+    expect(core).toBeCloseTo(1); // full pull in the core
+    expect(rim).toBeGreaterThan(0);
+    expect(rim).toBeLessThan(core); // eased down near the rim
+  });
+
+  it('flings the gathered glyph outward partway through the recoil', () => {
+    // Released, midway through the recoil: the inward pull has inverted to outward.
+    const releasing = { x: 0, y: 0, t: CHARGE_FULL, held: false, release: RECOIL_TIME * 0.5 };
+    const e = chargePull(releasing, 50, 0);
+    expect(e.dx).toBeGreaterThan(0); // pushed outward (+x), away from the centre
+  });
+
+  it('settles back to rest at the end of the recoil', () => {
+    const done = { x: 0, y: 0, t: CHARGE_FULL, held: false, release: RECOIL_TIME };
+    const e = chargePull(done, 50, 0);
+    expect(e.dx).toBeCloseTo(0);
+    expect(e.glow).toBeCloseTo(0);
   });
 });
