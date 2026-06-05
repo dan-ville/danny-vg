@@ -128,10 +128,10 @@ export function MatrixBackground() {
         grid[c][headRow] = randomGlyph();
       }
 
-      for (let t = 0; t < col.trail; t++) {
-        const row = headRow - t;
+      for (let ti = 0; ti < col.trail; ti++) {
+        const row = headRow - ti;
         if (row < 0 || row > rowCount) continue;
-        const intensity = glyphIntensity(t, col.trail);
+        const intensity = glyphIntensity(ti, col.trail);
         if (intensity <= 0) continue;
 
         const px = c * CELL;
@@ -139,7 +139,7 @@ export function MatrixBackground() {
 
         if (!active) {
           // Fast path: no interaction — draw the rain exactly as at rest.
-          ctx.fillStyle = t === 0 ? 'rgba(225,255,235,0.95)' : `rgba(59,255,122,${intensity})`;
+          ctx.fillStyle = ti === 0 ? 'rgba(225,255,235,0.95)' : `rgba(59,255,122,${intensity})`;
           ctx.fillText(grid[c][row] ?? randomGlyph(), px, py);
           continue;
         }
@@ -162,7 +162,7 @@ export function MatrixBackground() {
           grid[c][row] = randomGlyph();
         }
 
-        if (t === 0) {
+        if (ti === 0) {
           ctx.fillStyle = 'rgba(225,255,235,0.95)'; // bright white-green head
         } else {
           // Blend the green trail toward white by brightness; boost alpha so a
