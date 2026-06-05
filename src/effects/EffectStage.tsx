@@ -12,12 +12,14 @@ import { SmokeCanvas } from './SmokeCanvas';
  *   which lives inside `MatrixBackground` because it displaces the real rain glyphs.
  * - **rainbow** → the colored smoke-bomb plume (`SmokeCanvas`), an overlay
  *   canvas over the CSS gradient.
+ * - **kitty** → no layer here; its tap interaction is the cat's pounce, which
+ *   lives inside `KittyBackground` because it has to drive the real cat sprite.
  *
- * Rendering `null` for galaxy and matrix unmounts the smoke's window listener,
- * so a tap on those themes only triggers their own background effect.
+ * Rendering `null` for galaxy, matrix, and kitty unmounts the smoke's window
+ * listener, so a tap on those themes only triggers their own background effect.
  */
 export function EffectStage() {
   const { theme } = useTheme();
-  if (theme === 'galaxy' || theme === 'matrix') return null;
+  if (theme === 'galaxy' || theme === 'matrix' || theme === 'kitty') return null;
   return <SmokeCanvas />;
 }

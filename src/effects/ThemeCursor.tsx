@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useAnimationLoop } from '../hooks/useAnimationLoop';
 import { useResizableCanvas } from '../hooks/useResizableCanvas';
-import { useHoverCapable } from './useHoverCapable';
 import {
   advanceParticle,
   blinkOn,
@@ -14,6 +13,18 @@ import {
   SPARKLER_SPARKS,
   type CursorParticle,
 } from './cursorTrail';
+import { advanceYarn, createYarn, followPointer, smackYarn, type YarnBall } from './yarnBall';
+import { kittyLink } from './kittyLink';
+import { drawYarn } from '../backgrounds/kittySprites';
+
+/**
+ * Below this viewport width the kitty theme drops the yarn-ball cursor entirely:
+ * a touch screen has no resting hover pointer to anchor it under, so rather than
+ * a ball that only flickers into view while a finger is down, there's none — the
+ * cat simply hammers wherever you tap. The cat's own size/speed scaling lives in
+ * catSprite's `viewScale`; this is just the cursor cutoff.
+ */
+const YARN_DESKTOP_MIN_WIDTH = 1024;
 
 /** How fast the comet head eases toward the real pointer (fraction per frame). */
 const COMET_EASE = 0.28;
@@ -23,14 +34,13 @@ const COMET_RATE = 2;
 const SPARKLER_RATE = 4;
 
 /**
- * Desktop-only, theme-driven custom cursor. Mounts only on hover-capable devices
- * (touch keeps its native pointer); the inner {@link CursorCanvas} does the work
- * so its canvas exists from first render and the DPR-aware `useResizableCanvas`
- * binds correctly.
+ * Theme-driven custom cursor. On desktop it follows the mouse (the native
+ * pointer is hidden via `[data-cursor]`, scoped to hover-capable devices in
+ * index.css). On touch there is no hover, so it follows the finger while a drag
+ * is in progress and clears when the finger lifts — see {@link CursorCanvas}.
  */
 export function ThemeCursor() {
-  const enabled = useHoverCapable();
-  return enabled ? <CursorCanvas /> : null;
+  return <CursorCanvas />;
 }
 
 /**
@@ -40,6 +50,9 @@ export function ThemeCursor() {
  * - **matrix** → a blinking green terminal caret block (no trail).
  * - **rainbow** → a fireworks sparkler: a white-hot tip flinging colored sparks
  *   that arc and fall under gravity.
+ * - **kitty** → a ball of yarn that trails the pointer with a little weight and,
+ *   when the roaming cat pounces, goes flying and ricochets off the edges (its
+ *   position + a smack hook are shared with the cat via {@link kittyLink}).
  *
  * The native cursor is hidden by `[data-cursor] { cursor: none }` (scoped to
  * `@media (hover: hover)` in index.css); this sets `data-cursor` on the root
@@ -54,6 +67,8 @@ function CursorCanvas() {
   const particlesRef = useRef<CursorParticle[]>([]);
   const targetRef = useRef<{ x: number; y: number } | null>(null);
   const headRef = useRef<{ x: number; y: number } | null>(null);
+  const yarnRef = useRef<YarnBall | null>(null);
+  const prevTargetRef = useRef<{ x: number; y: number } | null>(null);
   const themeRef = useRef(theme);
   themeRef.current = theme;
 
@@ -69,18 +84,51 @@ function CursorCanvas() {
     return () => root.removeAttribute('data-cursor');
   }, [theme]);
 
-  // Track the real pointer.
+  // Track the real pointer. pointerdown seeds the target so even a stationary
+  // tap shows the cursor; pointermove follows a drag (the only signal touch
+  // gives — touch has no hover). On a touch lift there is no pointer left to
+  // follow, so drop the target and let the trail clear instead of stranding a
+  // frozen caret/yarn at the last touch point; a mouse keeps its position.
   useEffect(() => {
-    const onMove = (event: PointerEvent) => {
+    const onPoint = (event: PointerEvent) => {
       targetRef.current = { x: event.clientX, y: event.clientY };
     };
-    window.addEventListener('pointermove', onMove);
-    return () => window.removeEventListener('pointermove', onMove);
+    const onLift = (event: PointerEvent) => {
+      if (event.pointerType !== 'mouse') targetRef.current = null;
+    };
+    window.addEventListener('pointermove', onPoint);
+    window.addEventListener('pointerdown', onPoint);
+    window.addEventListener('pointerup', onLift);
+    window.addEventListener('pointercancel', onLift);
+    return () => {
+      window.removeEventListener('pointermove', onPoint);
+      window.removeEventListener('pointerdown', onPoint);
+      window.removeEventListener('pointerup', onLift);
+      window.removeEventListener('pointercancel', onLift);
+    };
   }, []);
 
-  // A theme switch starts the new cursor's trail fresh.
+  // A theme switch starts the new cursor fresh. For kitty, publish a smack hook
+  // the roaming cat calls on contact; clear it (and the shared yarn position)
+  // whenever the kitty cursor isn't the live one so the cat never smacks a ball
+  // that isn't there.
   useEffect(() => {
     particlesRef.current = [];
+    yarnRef.current = null;
+    kittyLink.yarn = null;
+    kittyLink.pin = null;
+    if (theme === 'kitty') {
+      kittyLink.smack = (vx, vy) => {
+        const yarn = yarnRef.current;
+        if (yarn) smackYarn(yarn, vx, vy);
+      };
+      return () => {
+        kittyLink.smack = null;
+        kittyLink.yarn = null;
+        kittyLink.pin = null;
+      };
+    }
+    kittyLink.smack = null;
   }, [theme]);
 
   useAnimationLoop((dt) => {
@@ -92,6 +140,44 @@ function CursorCanvas() {
     const target = targetRef.current;
     if (!target) return; // pointer hasn't moved yet — draw nothing.
     const list = particlesRef.current;
+
+    if (themeRef.current === 'kitty') {
+      // Below desktop width there's no yarn ball at all — clear the shared
+      // position so the cat aims at the real tap point, not a stale ball, and
+      // drop any ball built on a wider layout before a resize.
+      if (width < YARN_DESKTOP_MIN_WIDTH) {
+        yarnRef.current = null;
+        kittyLink.yarn = null;
+        return;
+      }
+      // Yarn ball: tracks the pointer at rest, flies + ricochets after a smack.
+      ctx.globalCompositeOperation = 'source-over';
+      const yarn = yarnRef.current ?? (yarnRef.current = createYarn(target.x, target.y));
+
+      if (kittyLink.pin) {
+        // The cat trapped the ball under its raised mallet — hold it at the pin
+        // so a moving cursor can't drag it off the anvil. It's flung (and the
+        // pin cleared) on the swing's impact frame.
+        yarn.x = kittyLink.pin.x;
+        yarn.y = kittyLink.pin.y;
+        yarn.airborne = false;
+        prevTargetRef.current = { x: target.x, y: target.y }; // don't count as "moved"
+      } else {
+        // Moving the mouse reclaims control mid-flight — the ball snaps back to
+        // following the cursor instead of finishing its bounce — except during
+        // the brief post-smack grace window, so a fresh hit always flings clear.
+        const prev = prevTargetRef.current;
+        const moved = prev !== null && (prev.x !== target.x || prev.y !== target.y);
+        if (yarn.airborne && moved && yarn.launchGrace <= 0) yarn.airborne = false;
+        prevTargetRef.current = { x: target.x, y: target.y };
+
+        if (yarn.airborne) advanceYarn(yarn, dt, width, height);
+        else followPointer(yarn, target.x, target.y);
+      }
+      kittyLink.yarn = { x: yarn.x, y: yarn.y };
+      drawYarn(ctx, yarn.x, yarn.y, yarn.angle);
+      return;
+    }
 
     if (themeRef.current === 'galaxy') {
       // Comet: head eases toward the pointer, sparks shed from the head.

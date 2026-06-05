@@ -25,16 +25,26 @@ function renderStage() {
 }
 
 describe('EffectStage', () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    localStorage.clear();
+    window.history.replaceState(null, '', '/'); // provider writes ?theme=; keep tests isolated
+  });
   afterEach(() => localStorage.clear());
 
   it('renders no ripple on galaxy — the gravity well is the galaxy effect', () => {
-    const { container } = renderStage(); // default theme is galaxy
+    localStorage.setItem(THEME_STORAGE_KEY, 'galaxy');
+    const { container } = renderStage();
     expect(container.querySelector('canvas')).toBeNull();
   });
 
   it('renders no overlay on matrix — the shockwave-decode is the matrix effect', () => {
     localStorage.setItem(THEME_STORAGE_KEY, 'matrix');
+    const { container } = renderStage();
+    expect(container.querySelector('canvas')).toBeNull();
+  });
+
+  it('renders no overlay on kitty — the cat pounce is the kitty effect', () => {
+    localStorage.setItem(THEME_STORAGE_KEY, 'kitty');
     const { container } = renderStage();
     expect(container.querySelector('canvas')).toBeNull();
   });
@@ -47,6 +57,7 @@ describe('EffectStage', () => {
 
   it('mounts the smoke only once cycling reaches rainbow', async () => {
     const user = userEvent.setup();
+    localStorage.setItem(THEME_STORAGE_KEY, 'galaxy');
     const { container } = renderStage(); // galaxy
     expect(container.querySelector('canvas')).toBeNull();
     await user.click(screen.getByRole('button', { name: 'cycle' })); // → matrix
