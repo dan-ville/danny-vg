@@ -8,6 +8,9 @@ import {
   MIN_STRENGTH,
   ringEffect,
   combineRings,
+  chargePull,
+  CHARGE_FULL,
+  CHARGE_PULL_RADIUS,
 } from './shockwave';
 
 describe('createRing', () => {
@@ -121,5 +124,28 @@ describe('combineRings', () => {
 
   it('is inert with no rings', () => {
     expect(combineRings([], 130, 0)).toEqual({ dx: 0, dy: 0, decode: 0 });
+  });
+});
+
+describe('chargePull', () => {
+  it('bends a nearby glyph inward toward the charge centre', () => {
+    // Charge at origin, point on +x: displacement should be toward the centre (-x).
+    const e = chargePull({ x: 0, y: 0, t: CHARGE_FULL }, 50, 0);
+    expect(e.dx).toBeLessThan(0);
+  });
+
+  it('brightens more the longer the press is charged', () => {
+    const half = chargePull({ x: 0, y: 0, t: CHARGE_FULL / 2 }, 50, 0).glow;
+    const full = chargePull({ x: 0, y: 0, t: CHARGE_FULL }, 50, 0).glow;
+    expect(full).toBeGreaterThan(half);
+  });
+
+  it('does nothing at the instant of the press (t = 0)', () => {
+    expect(chargePull({ x: 0, y: 0, t: 0 }, 50, 0)).toEqual({ dx: 0, dy: 0, glow: 0 });
+  });
+
+  it('does not reach beyond CHARGE_PULL_RADIUS', () => {
+    const e = chargePull({ x: 0, y: 0, t: CHARGE_FULL }, CHARGE_PULL_RADIUS + 10, 0);
+    expect(e).toEqual({ dx: 0, dy: 0, glow: 0 });
   });
 });

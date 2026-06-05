@@ -132,3 +132,23 @@ export function combineRings(rings: Ring[], x: number, y: number): ShoveEffect {
   }
   return { dx, dy, decode };
 }
+
+/**
+ * The charge's effect on the glyph at (x, y) while a press is held: a gentle
+ * inward bend toward the charge centre plus a brighten, both scaling with how
+ * long it has charged (t / CHARGE_FULL, clamped) and fading linearly to nothing
+ * at CHARGE_PULL_RADIUS. Returns all-zero before the charge builds or out of reach.
+ */
+export function chargePull(charge: Charge, x: number, y: number): ChargeEffect {
+  const dx0 = x - charge.x;
+  const dy0 = y - charge.y;
+  const dist = Math.hypot(dx0, dy0);
+  const c = Math.min(1, charge.t / CHARGE_FULL);
+  if (dist < 1e-6 || dist >= CHARGE_PULL_RADIUS || c <= 0) return { dx: 0, dy: 0, glow: 0 };
+  const falloff = 1 - dist / CHARGE_PULL_RADIUS; // 1 at centre -> 0 at the radius
+  const pull = CHARGE_PULL_MAX * c * falloff;
+  const ux = dx0 / dist;
+  const uy = dy0 / dist;
+  // Inward = opposite the outward unit vector.
+  return { dx: -ux * pull, dy: -uy * pull, glow: c * falloff };
+}
