@@ -102,6 +102,13 @@ describe('ringEffect', () => {
     expect(Number.isFinite(e.dy)).toBe(true);
     expect(Number.isFinite(e.decode)).toBe(true);
   });
+
+  it('fades the shove smoothly to near-zero at the band edges (no snap)', () => {
+    const justInside = ringEffect(ringAt100(), 100 + BAND_HALF_WIDTH - 1, 0);
+    const justOutside = ringEffect(ringAt100(), 100 + BAND_HALF_WIDTH + 1, 0);
+    expect(Math.abs(justInside.dx)).toBeLessThan(2); // smoothly tapered, not ~27px
+    expect(justOutside.dx).toBe(0);
+  });
 });
 
 describe('combineRings', () => {

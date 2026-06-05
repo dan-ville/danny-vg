@@ -105,14 +105,16 @@ export function ringEffect(ring: Ring, x: number, y: number): ShoveEffect {
 
   const peak = SHOVE_BASE + ring.strength * (SHOVE_MAX - SHOVE_BASE);
   const sigma = BAND_HALF_WIDTH / 2;
-  // Odd ripple: + outward for s>0, - inward for s<0, ~0 at the crest and edges.
+  // Parabolic window: 1 at the crest, smoothly 0 at the band edges. Shared by the
+  // shove and the decode so both fade to zero at |s| = BAND_HALF_WIDTH with no jump.
+  const w = Math.max(0, 1 - (s / BAND_HALF_WIDTH) ** 2);
+  // Odd ripple: + outward for s>0, - inward for s<0, ~0 at the crest; windowed by w.
   const ripple = (s / BAND_HALF_WIDTH) * Math.exp(-(s * s) / (2 * sigma * sigma)) * SHAPE_NORM;
-  const mag = peak * ripple;
+  const mag = peak * ripple * w;
   const ux = dx0 / dist;
   const uy = dy0 / dist;
 
-  const w = 1 - (s / BAND_HALF_WIDTH) ** 2; // 1 at the crest, 0 at the band edges
-  const decode = Math.max(0, w) * ring.strength;
+  const decode = w * ring.strength;
 
   return { dx: ux * mag, dy: uy * mag, decode };
 }
