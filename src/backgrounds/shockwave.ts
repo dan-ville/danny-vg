@@ -14,8 +14,8 @@
 
 /** Wavefront expansion speed, px/sec. */
 export const RING_SPEED = 850;
-/** Half-width of the active band around the wavefront, px. */
-export const BAND_THICKNESS = 70;
+/** Half-width of the active band around the wavefront, px (band spans ±this). */
+export const BAND_HALF_WIDTH = 70;
 /** Peak radial shove at strength 0, px (a quick tap still reads). */
 export const SHOVE_BASE = 22;
 /** Peak radial shove at full strength, px. */
@@ -48,7 +48,9 @@ export interface Ring {
 
 /** A held press that is charging a ring; anchored at the press point. */
 export interface Charge {
+  /** Press point in CSS px. */
   x: number;
+  /** Press point in CSS px. */
   y: number;
   /** Seconds held so far. */
   t: number;
@@ -83,5 +85,5 @@ export function advanceRing(ring: Ring, dt: number): void {
 
 /** True once the band's trailing edge has passed `reach` (e.g. viewport diagonal). */
 export function isRingDone(ring: Ring, reach: number): boolean {
-  return ring.radius - BAND_THICKNESS > reach;
+  return ring.radius - BAND_HALF_WIDTH > reach;
 }

@@ -4,7 +4,7 @@ import {
   advanceRing,
   isRingDone,
   RING_SPEED,
-  BAND_THICKNESS,
+  BAND_HALF_WIDTH,
   MIN_STRENGTH,
 } from './shockwave';
 
@@ -39,6 +39,19 @@ describe('advanceRing', () => {
     advanceRing(ring, 0.5);
     expect(ring.radius).toBeCloseTo(RING_SPEED * 0.5);
   });
+
+  it('leaves the radius unchanged for a zero time delta', () => {
+    const ring = createRing(0, 0, 1);
+    advanceRing(ring, 0);
+    expect(ring.radius).toBe(0);
+  });
+
+  it('accumulates radius across successive calls', () => {
+    const ring = createRing(0, 0, 1);
+    advanceRing(ring, 0.1);
+    advanceRing(ring, 0.1);
+    expect(ring.radius).toBeCloseTo(RING_SPEED * 0.2);
+  });
 });
 
 describe('isRingDone', () => {
@@ -46,7 +59,7 @@ describe('isRingDone', () => {
     const ring = createRing(0, 0, 1);
     ring.radius = 200;
     expect(isRingDone(ring, 1000)).toBe(false);
-    ring.radius = 1000 + BAND_THICKNESS + 1;
+    ring.radius = 1000 + BAND_HALF_WIDTH + 1;
     expect(isRingDone(ring, 1000)).toBe(true);
   });
 });
